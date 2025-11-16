@@ -70,7 +70,7 @@ export default function Home() {
 	];
 
 	return (
-		<div className='min-h-screen bg-gray-50 font-display'>
+		<div className='min-h-screen bg-gray-50 dark:bg-zinc-950 font-display'>
 			<NavigationDrawer
 				isOpen={isDrawerOpen}
 				onClose={() => setIsDrawerOpen(false)}
@@ -89,7 +89,7 @@ export default function Home() {
 
 			{/* Floating Action Button */}
 			<Link href='/add'>
-				<button className='fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-transform hover:scale-105 active:scale-95'>
+				<button className='fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 dark:bg-green-600 text-white shadow-lg transition-transform hover:scale-105 active:scale-95'>
 					<span className='material-symbols-outlined text-3xl'>
 						add
 					</span>
