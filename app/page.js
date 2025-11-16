@@ -1,11 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 import DashboardCard from "./components/dashboard_card";
+import NavigationDrawer from "./components/navigation_drawer";
+import AppBar from "./components/app_bar";
 
 export default function Home() {
+	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
 	const reports = [
 		{
 			id: 1,
@@ -60,31 +65,17 @@ export default function Home() {
 			timeAgo: "3 days ago",
 			likes: 30,
 			image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCGDRcQfE90rTrAjxQZai_cdhDmAyIDfGlrhtY-VQIWDEJKmyU-ICrHeqAD7oSuptSUYVN88W8oV-n_wl-OuZFQdpHiLTHhqA9P0bCZ0mEbHtL1Hmzcx1F4raCtTkm4-4RDw_Zs_99Tc7g3130UJL6oilDUxJrBHtGRdQFMtgpGTo6qyYybr8wr5EdJ7bNL_Qcktzhrw9QiH5AK4LZCnh7IR0zReZBl9sHaJ1slyHsHGNVQW0EtvbOWfOip42TCKrKdXP-Zm3YipekS",
-
 			imageAlt: "MRI scan showing areas of brain damage.",
 		},
 	];
 
 	return (
 		<div className='min-h-screen bg-gray-50 font-display'>
-			{/* Top App Bar */}
-			<header className='sticky top-0 z-10 flex h-16 items-center justify-between bg-white px-4 shadow-sm'>
-				<h1 className='text-xl font-bold text-gray-900'>
-					Community Reports
-				</h1>
-				<div className='flex items-center gap-2'>
-					<button className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-transparent text-gray-600 hover:bg-gray-100 transition-colors'>
-						<span className='material-symbols-outlined text-2xl'>
-							search
-						</span>
-					</button>
-					<button className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-transparent text-gray-600 hover:bg-gray-100 transition-colors'>
-						<span className='material-symbols-outlined text-2xl'>
-							filter_list
-						</span>
-					</button>
-				</div>
-			</header>
+			<NavigationDrawer
+				isOpen={isDrawerOpen}
+				onClose={() => setIsDrawerOpen(false)}
+			/>
+			<AppBar onMenuClick={() => setIsDrawerOpen(true)} />
 
 			{/* Main Content */}
 			<main className='p-4 pb-24'>
