@@ -2,20 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-	--background: #ffffff;
-	--foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
 	:root {
-		--background: #0a0a0a;
-		--foreground: #ededed;
+		--background: #f5f7f8;
+		--foreground: #0d171c;
+		--card: #ffffff;
+		--card-foreground: #0d171c;
+		--primary: #0da6f2;
+		--primary-foreground: #ffffff;
+		--secondary: #00a99d;
+		--secondary-foreground: #ffffff;
+		--muted: #f5f7f8;
+		--muted-foreground: #6c757d;
+		--accent: #ffa500;
+		--accent-foreground: #ffffff;
+		--border: #cee0e8;
+		--input: #cee0e8;
+		--ring: #0da6f2;
+	}
+
+	.dark {
+		--background: #101c22;
+		--foreground: #f5f7f8;
+		--card: #1a2831;
+		--card-foreground: #f5f7f8;
+		--primary: #0da6f2;
+		--primary-foreground: #ffffff;
+		--secondary: #00a99d;
+		--secondary-foreground: #ffffff;
+		--muted: #1a2831;
+		--muted-foreground: #a8b5c0;
+		--accent: #ffa500;
+		--accent-foreground: #ffffff;
+		--border: #334155;
+		--input: #334155;
+		--ring: #0da6f2;
 	}
 }
 
-body {
-	background: var(--background);
-	color: var(--foreground);
-	font-family: Arial, Helvetica, sans-serif;
+@layer base {
+	* {
+		@apply border-border-light dark:border-border-dark;
+	}
+	body {
+		@apply bg-background-light dark:bg-background-dark text-text-primary-light dark:text-text-primary-dark font-display;
+	}
+}
+
+/* Material Icons settings */
+.material-symbols-outlined {
+	font-variation-settings:
+		"FILL" 0,
+		"wght" 400,
+		"GRAD" 0,
+		"opsz" 24;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	@apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+	@apply bg-border-light dark:bg-border-dark rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	@apply bg-text-secondary-light dark:bg-text-secondary-dark;
+}
+
+/* Hide scrollbar for certain elements */
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+/* Focus ring utility */
+.focus-ring {
+	@apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background-light dark:focus:ring-offset-background-dark;
+}
+
+/* Glass effect for overlays */
+.glass {
+	@apply bg-white/80 dark:bg-background-dark/80 backdrop-blur-sm;
+}
+
+/* Status badge variants */
+.status-reported {
+	@apply bg-status-reported/20 text-status-reported;
+}
+
+.status-acknowledged {
+	@apply bg-status-acknowledged/20 text-status-acknowledged;
+}
+
+.status-progress {
+	@apply bg-status-progress/20 text-status-progress;
+}
+
+.status-resolved {
+	@apply bg-status-resolved/20 text-status-resolved;
 }

@@ -64,7 +64,11 @@ export default function DashboardCard({ report }) {
 					<span className='material-symbols-outlined text-lg'>
 						location_on
 					</span>
-					<span>{report.location}</span>
+					<span>
+						{typeof report.location === "object"
+							? report.location.address || report.location.area
+							: report.location}
+					</span>
 				</div>
 
 				{/* Footer */}
