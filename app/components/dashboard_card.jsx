@@ -1,13 +1,13 @@
-const getCategoryColorClass = (color) => {
+function getCategoryColorClass(color) {
 	const colors = {
 		orange: "text-orange-500 dark:text-orange-400",
 		blue: "text-blue-500 dark:text-blue-400",
 		green: "text-green-600 dark:text-green-500",
 	};
 	return colors[color] || "text-gray-600 dark:text-gray-400";
-};
+}
 
-const getStatusColorClass = (color) => {
+function getStatusColorClass(color) {
 	const colors = {
 		orange: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
 		blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
@@ -17,7 +17,7 @@ const getStatusColorClass = (color) => {
 		colors[color] ||
 		"bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
 	);
-};
+}
 
 export default function DashboardCard({ report }) {
 	return (
