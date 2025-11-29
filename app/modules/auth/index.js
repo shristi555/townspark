@@ -41,8 +41,8 @@ export const AuthService = {
 		const response = await httpClient.post(API_ROUTES.auth.register, {
 			email: userData.email,
 			password: userData.password,
-			full_name: userData.name,
-			phone_number: userData.phone,
+			full_name: userData.full_name,
+			phone_number: userData.phone_number,
 			address: userData.address,
 		});
 
@@ -63,13 +63,12 @@ export const AuthService = {
 		const response = await httpClient.post(
 			API_ROUTES.auth.registerResolver,
 			{
-				name: resolverData.name,
+				full_name: resolverData.full_name,
 				email: resolverData.email,
-				phone: resolverData.phone,
+				phone_number: resolverData.phone_number,
 				password: resolverData.password,
-				confirm_password: resolverData.confirmPassword,
 				department: resolverData.department,
-				employee_id: resolverData.employeeId,
+				employee_id: resolverData.employee_id,
 				designation: resolverData.designation,
 			},
 			{ files: fileData }

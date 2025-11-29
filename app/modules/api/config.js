@@ -5,8 +5,7 @@
 
 // Use relative URL to go through Next.js proxy (avoids CORS issues)
 // In production, set NEXT_PUBLIC_API_BASE_URL to your actual API domain
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
 
 export const API_CONFIG = {
 	baseUrl: API_BASE_URL,
