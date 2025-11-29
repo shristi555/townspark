@@ -1,4 +1,5 @@
 import { ThemeProvider } from "./contexts/theme_context";
+import { AuthProvider } from "./contexts/auth_context";
 import "./globals.css";
 
 export const metadata = {
@@ -21,7 +22,9 @@ export default function RootLayout({ children }) {
 				/>
 			</head>
 			<body className='antialiased font-sans'>
-				<ThemeProvider>{children}</ThemeProvider>
+				<ThemeProvider>
+					<AuthProvider>{children}</AuthProvider>
+				</ThemeProvider>
 			</body>
 		</html>
 	);

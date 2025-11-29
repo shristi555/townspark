@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Header, BottomNavigation } from "../components/layout";
 import {
@@ -9,29 +9,67 @@ import {
 	Textarea,
 	Select,
 	ImageUploader,
+	Loader,
 } from "../components/ui";
-import { categories, urgencyLevels, departments } from "../data/dummy_data";
+import { useAuth } from "../contexts/auth_context";
+import { useCategories, useAreas } from "../hooks";
+import { IssueService } from "../modules/issues";
 
 export default function ReportIssuePage() {
 	const router = useRouter();
+	const { user, isAuthenticated, loading: authLoading } = useAuth();
 	const [loading, setLoading] = useState(false);
 	const [images, setImages] = useState([]);
+	const [apiError, setApiError] = useState("");
 	const [formData, setFormData] = useState({
 		title: "",
 		description: "",
 		category: "",
 		urgency: "normal",
 		location: "",
-		department: "",
+		area: "",
+		is_anonymous: false,
 	});
 	const [errors, setErrors] = useState({});
+	const [coords, setCoords] = useState({ latitude: null, longitude: null });
+
+	// Fetch categories and areas from API
+	const { data: categories, loading: categoriesLoading } = useCategories();
+	const { data: areas, loading: areasLoading } = useAreas();
+
+	// Urgency levels (static)
+	const urgencyLevels = [
+		{ id: "low", name: "Low" },
+		{ id: "normal", name: "Normal" },
+		{ id: "high", name: "High" },
+		{ id: "critical", name: "Critical" },
+	];
+
+	// Redirect if not authenticated
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) {
+			router.push("/login");
+		}
+	}, [authLoading, isAuthenticated, router]);
+
+	if (authLoading || !user) {
+		return (
+			<div className='min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark'>
+				<Loader size='lg' />
+			</div>
+		);
+	}
 
 	const handleChange = (e) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({ ...prev, [name]: value }));
+		const { name, value, type, checked } = e.target;
+		setFormData((prev) => ({
+			...prev,
+			[name]: type === "checkbox" ? checked : value,
+		}));
 		if (errors[name]) {
 			setErrors((prev) => ({ ...prev, [name]: "" }));
 		}
+		setApiError("");
 	};
 
 	const validate = () => {
@@ -60,18 +98,48 @@ export default function ReportIssuePage() {
 		}
 
 		setLoading(true);
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 1500));
-		setLoading(false);
+		setApiError("");
 
-		// Navigate to feed with success message
-		router.push("/feed?reported=true");
+		try {
+			const issueData = {
+				title: formData.title,
+				description: formData.description,
+				category: formData.category,
+				urgency_level: formData.urgency,
+				location: formData.location,
+				area: formData.area || undefined,
+				latitude: coords.latitude,
+				longitude: coords.longitude,
+				is_anonymous: formData.is_anonymous,
+			};
+
+			const response = await IssueService.createIssue(issueData, images);
+
+			if (response.success) {
+				// Navigate to feed with success message
+				router.push("/feed?reported=true");
+			} else {
+				setApiError(
+					response.error ||
+						"Failed to submit report. Please try again."
+				);
+			}
+		} catch (error) {
+			console.error("Submit error:", error);
+			setApiError("An unexpected error occurred. Please try again.");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const handleGetLocation = () => {
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
+					setCoords({
+						latitude: position.coords.latitude,
+						longitude: position.coords.longitude,
+					});
 					// In real app, we'd reverse geocode this
 					setFormData((prev) => ({
 						...prev,
@@ -80,8 +148,13 @@ export default function ReportIssuePage() {
 				},
 				(error) => {
 					console.error("Error getting location:", error);
+					setApiError(
+						"Unable to get your location. Please enter it manually."
+					);
 				}
 			);
+		} else {
+			setApiError("Geolocation is not supported by your browser.");
 		}
 	};
 
@@ -110,6 +183,12 @@ export default function ReportIssuePage() {
 				</div>
 
 				<form onSubmit={handleSubmit} className='space-y-6'>
+					{apiError && (
+						<div className='p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm'>
+							{apiError}
+						</div>
+					)}
+
 					{/* Images */}
 					<ImageUploader
 						images={images}
@@ -150,10 +229,11 @@ export default function ReportIssuePage() {
 							value={formData.category}
 							onChange={handleChange}
 							error={errors.category}
-							options={categories.map((c) => ({
-								value: c.id,
+							options={(categories || []).map((c) => ({
+								value: c.id || c.slug || c.name,
 								label: c.name,
 							}))}
+							loading={categoriesLoading}
 							fullWidth
 						/>
 
@@ -194,19 +274,34 @@ export default function ReportIssuePage() {
 						</button>
 					</div>
 
-					{/* Department (Optional) */}
+					{/* Area (Optional) */}
 					<Select
-						label='Relevant Department (Optional)'
-						name='department'
-						placeholder='Select department if known'
-						value={formData.department}
+						label='Area (Optional)'
+						name='area'
+						placeholder='Select area if known'
+						value={formData.area}
 						onChange={handleChange}
-						options={departments.map((d) => ({
-							value: d.id,
-							label: d.name,
+						options={(areas || []).map((a) => ({
+							value: a.id || a.slug || a.name,
+							label: a.name,
 						}))}
+						loading={areasLoading}
 						fullWidth
 					/>
+
+					{/* Anonymous Checkbox */}
+					<label className='flex items-center gap-3 cursor-pointer'>
+						<input
+							type='checkbox'
+							name='is_anonymous'
+							checked={formData.is_anonymous}
+							onChange={handleChange}
+							className='w-4 h-4 text-primary rounded border-border-light dark:border-border-dark focus:ring-primary'
+						/>
+						<span className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
+							Submit anonymously (your name won't be shown)
+						</span>
+					</label>
 
 					{/* Submit */}
 					<div className='flex gap-4 pt-4'>

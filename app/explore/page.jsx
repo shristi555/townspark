@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Header, BottomNavigation } from "../components/layout";
 import { IssueList } from "../components/features";
-import { Input, FilterChip, Button } from "../components/ui";
-import { issues, categories } from "../data/dummy_data";
+import { Input, FilterChip, Button, Loader } from "../components/ui";
+import { useCategories } from "../hooks";
+import { IssueService } from "../modules/issues";
 import Link from "next/link";
 
 export default function ExplorePage() {
@@ -12,25 +13,64 @@ export default function ExplorePage() {
 	const [selectedCategory, setSelectedCategory] = useState("all");
 	const [viewMode, setViewMode] = useState("list"); // list, map
 
-	const filteredIssues = issues.filter((issue) => {
-		const matchesSearch =
-			!searchQuery ||
-			issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			issue.description
-				.toLowerCase()
-				.includes(searchQuery.toLowerCase()) ||
-			issue.location?.address
-				?.toLowerCase()
-				.includes(searchQuery.toLowerCase()) ||
-			issue.location?.area
-				?.toLowerCase()
-				.includes(searchQuery.toLowerCase());
+	// State for issues
+	const [issues, setIssues] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
+	const [pagination, setPagination] = useState(null);
 
-		const matchesCategory =
-			selectedCategory === "all" || issue.category === selectedCategory;
+	// Fetch categories from API
+	const { data: categories, loading: categoriesLoading } = useCategories();
 
-		return matchesSearch && matchesCategory;
-	});
+	// Fetch issues
+	const fetchIssues = useCallback(
+		async (params = {}) => {
+			setLoading(true);
+			setError(null);
+
+			try {
+				const queryParams = {
+					search: searchQuery || undefined,
+					category:
+						selectedCategory !== "all"
+							? selectedCategory
+							: undefined,
+					...params,
+				};
+
+				const response = await IssueService.getIssues(queryParams);
+
+				if (response.success) {
+					setIssues(response.data.results || response.data);
+					setPagination({
+						count: response.data.count,
+						next: response.data.next,
+						previous: response.data.previous,
+					});
+				} else {
+					setError(response.error);
+				}
+			} catch (err) {
+				setError(err.message);
+			} finally {
+				setLoading(false);
+			}
+		},
+		[searchQuery, selectedCategory]
+	);
+
+	// Fetch issues on mount and when filters change
+	useEffect(() => {
+		const debounceTimer = setTimeout(() => {
+			fetchIssues();
+		}, 300); // Debounce search
+
+		return () => clearTimeout(debounceTimer);
+	}, [fetchIssues]);
+
+	const handleFilterChange = (newFilters) => {
+		fetchIssues(newFilters);
+	};
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>
@@ -84,11 +124,18 @@ export default function ExplorePage() {
 					>
 						All Categories
 					</FilterChip>
-					{categories.map((cat) => (
+					{(categories || []).map((cat) => (
 						<FilterChip
-							key={cat.id}
-							active={selectedCategory === cat.name}
-							onClick={() => setSelectedCategory(cat.name)}
+							key={cat.id || cat.name}
+							active={
+								selectedCategory ===
+								(cat.id || cat.slug || cat.name)
+							}
+							onClick={() =>
+								setSelectedCategory(
+									cat.id || cat.slug || cat.name
+								)
+							}
 							icon={cat.icon}
 						>
 							{cat.name}
@@ -99,17 +146,22 @@ export default function ExplorePage() {
 				{/* Results Count */}
 				<div className='flex items-center justify-between mb-4'>
 					<p className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
-						{filteredIssues.length} issue
-						{filteredIssues.length !== 1 ? "s" : ""} found
+						{issues.length} issue
+						{issues.length !== 1 ? "s" : ""} found
+						{pagination?.count && ` of ${pagination.count} total`}
 					</p>
 				</div>
 
 				{/* Content */}
 				{viewMode === "list" ? (
 					<IssueList
-						issues={filteredIssues}
+						issues={issues}
+						loading={loading}
+						error={error}
 						showFilters
 						showSort
+						onFilterChange={handleFilterChange}
+						pagination={pagination}
 						emptyTitle='No issues found'
 						emptyDescription={
 							searchQuery

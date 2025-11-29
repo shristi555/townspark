@@ -1,14 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Header, BottomNavigation, Sidebar } from "../components/layout";
 import { IssueList } from "../components/features";
-import { Button } from "../components/ui";
-import { issues, currentUser } from "../data/dummy_data";
+import { Button, Loader } from "../components/ui";
+import { useAuth } from "../contexts/auth_context";
+import { useIssues } from "../hooks";
 import Link from "next/link";
 
 export default function FeedPage() {
+	const router = useRouter();
+	const { user, isAuthenticated, loading: authLoading } = useAuth();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
+
+	// Fetch issues from API
+	const {
+		issues,
+		loading: issuesLoading,
+		error,
+		pagination,
+		updateFilters,
+		goToPage,
+		refetch,
+	} = useIssues({ sort: "newest" });
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) {
+			router.push("/login");
+		}
+	}, [authLoading, isAuthenticated, router]);
+
+	// Show loading while checking auth
+	if (authLoading || !user) {
+		return (
+			<div className='min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark'>
+				<Loader size='lg' />
+			</div>
+		);
+	}
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>
@@ -16,8 +47,8 @@ export default function FeedPage() {
 			<Sidebar
 				isOpen={sidebarOpen}
 				onClose={() => setSidebarOpen(false)}
-				showResolverNav={currentUser.role === "resolver"}
-				showAdminNav={currentUser.role === "admin"}
+				showResolverNav={user?.role === "resolver"}
+				showAdminNav={user?.role === "admin"}
 			/>
 
 			{/* Main Content */}
@@ -45,7 +76,8 @@ export default function FeedPage() {
 							<div>
 								<h1 className='text-lg font-bold text-text-primary-light dark:text-text-primary-dark'>
 									Welcome back,{" "}
-									{currentUser.name.split(" ")[0]}! 👋
+									{user?.full_name?.split(" ")[0] || "User"}!
+									👋
 								</h1>
 								<p className='text-sm text-text-secondary-light dark:text-text-secondary-dark mt-1'>
 									Stay updated with issues in your community
@@ -113,8 +145,13 @@ export default function FeedPage() {
 					{/* Issue Feed */}
 					<IssueList
 						issues={issues}
+						loading={issuesLoading}
+						error={error}
 						showFilters
 						showSort
+						onFilterChange={updateFilters}
+						pagination={pagination}
+						onPageChange={goToPage}
 						emptyTitle='No issues in your feed'
 						emptyDescription='Be the first to report an issue in your community'
 						emptyAction={

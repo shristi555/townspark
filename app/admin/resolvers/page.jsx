@@ -1,12 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Header, Sidebar } from "../../components/layout";
 import { UserTable, StatsGrid } from "../../components/features";
-import { Input, Select, Button, Modal, Badge } from "../../components/ui";
-import { users as dummyUsers, departments } from "../../data/dummy_data";
+import {
+	Input,
+	Select,
+	Button,
+	Modal,
+	Badge,
+	Loader,
+} from "../../components/ui";
+import { useAuth } from "../../contexts/auth_context";
+import { AdminService, CoreService } from "../../modules";
 
 export default function AdminResolversPage() {
+	const router = useRouter();
+	const {
+		user: authUser,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [departmentFilter, setDepartmentFilter] = useState("all");
@@ -14,9 +29,60 @@ export default function AdminResolversPage() {
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [selectedResolver, setSelectedResolver] = useState(null);
 
-	const resolvers = dummyUsers.filter((u) => u.role === "resolver");
-	const verifiedResolvers = resolvers.filter((r) => r.isVerified);
-	const pendingResolvers = resolvers.filter((r) => !r.isVerified);
+	// Data states
+	const [resolvers, setResolvers] = useState([]);
+	const [departments, setDepartments] = useState([]);
+	const [loading, setLoading] = useState(true);
+
+	// Check if user is admin
+	useEffect(() => {
+		if (!authLoading) {
+			if (!isAuthenticated) {
+				router.push("/login");
+				return;
+			}
+			if (authUser && authUser.role !== "admin") {
+				router.push("/feed");
+				return;
+			}
+		}
+	}, [authLoading, isAuthenticated, authUser, router]);
+
+	// Fetch resolvers data
+	const fetchResolvers = useCallback(async () => {
+		if (!authUser || authUser.role !== "admin") return;
+
+		setLoading(true);
+		try {
+			const [resolversRes, categoriesRes] = await Promise.all([
+				AdminService.getResolvers(),
+				CoreService.getCategories(),
+			]);
+
+			if (resolversRes.success) {
+				setResolvers(
+					resolversRes.data?.results || resolversRes.data || []
+				);
+			}
+			if (categoriesRes.success) {
+				// Use categories as departments or fetch actual departments
+				setDepartments(categoriesRes.data || []);
+			}
+		} catch (error) {
+			console.error("Failed to fetch resolvers:", error);
+		} finally {
+			setLoading(false);
+		}
+	}, [authUser]);
+
+	useEffect(() => {
+		if (authUser?.role === "admin") {
+			fetchResolvers();
+		}
+	}, [authUser, fetchResolvers]);
+
+	const verifiedResolvers = resolvers.filter((r) => r.is_verified);
+	const pendingResolvers = resolvers.filter((r) => !r.is_verified);
 
 	const resolverStats = [
 		{
@@ -35,14 +101,18 @@ export default function AdminResolversPage() {
 			value: pendingResolvers.length,
 			icon: "pending",
 		},
-		{ label: "Avg. Resolution Time", value: "2.3 days", icon: "schedule" },
+		{ label: "Avg. Resolution Time", value: "N/A", icon: "schedule" },
 	];
 
 	const filteredResolvers = resolvers.filter((resolver) => {
 		const matchesSearch =
 			!searchQuery ||
-			resolver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			resolver.email.toLowerCase().includes(searchQuery.toLowerCase());
+			(resolver.full_name || resolver.username || "")
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase()) ||
+			(resolver.email || "")
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase());
 
 		const matchesDepartment =
 			departmentFilter === "all" ||
@@ -56,13 +126,38 @@ export default function AdminResolversPage() {
 		setShowEditModal(true);
 	};
 
-	const handleVerifyResolver = (resolver) => {
-		console.log("Verify resolver:", resolver.id);
+	const handleVerifyResolver = async (resolver) => {
+		try {
+			const response = await AdminService.approveResolver(resolver.id);
+			if (response.success) {
+				fetchResolvers();
+			}
+		} catch (error) {
+			console.error("Failed to verify resolver:", error);
+		}
 	};
 
-	const handleDeleteResolver = (resolver) => {
-		console.log("Delete resolver:", resolver.id);
+	const handleDeleteResolver = async (resolver) => {
+		if (!confirm("Are you sure you want to delete this resolver?")) return;
+
+		try {
+			const response = await AdminService.deleteUser(resolver.id);
+			if (response.success) {
+				fetchResolvers();
+			}
+		} catch (error) {
+			console.error("Failed to delete resolver:", error);
+		}
 	};
+
+	// Show loading state
+	if (authLoading || loading) {
+		return (
+			<div className='min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center'>
+				<Loader size='lg' />
+			</div>
+		);
+	}
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>

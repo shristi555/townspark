@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Header, Sidebar } from "../../components/layout";
 import { UserTable, StatsGrid } from "../../components/features";
 import {
@@ -10,10 +11,18 @@ import {
 	Modal,
 	Tabs,
 	TabPanel,
+	Loader,
 } from "../../components/ui";
-import { users as dummyUsers } from "../../data/dummy_data";
+import { useAuth } from "../../contexts/auth_context";
+import { AdminService } from "../../modules";
 
 export default function AdminUsersPage() {
+	const router = useRouter();
+	const {
+		user: authUser,
+		isAuthenticated,
+		isLoading: authLoading,
+	} = useAuth();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
@@ -21,39 +30,122 @@ export default function AdminUsersPage() {
 	const [showEditModal, setShowEditModal] = useState(false);
 	const [selectedUser, setSelectedUser] = useState(null);
 
-	const citizens = dummyUsers.filter((u) => u.role === "citizen");
-	const activeUsers = dummyUsers.filter((u) => u.isActive);
+	// Data states
+	const [users, setUsers] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [stats, setStats] = useState(null);
 
-	const userStats = [
-		{ label: "Total Citizens", value: citizens.length, icon: "group" },
-		{
-			label: "Active Users",
-			value: activeUsers.length,
-			icon: "person",
-			accent: true,
-		},
-		{ label: "New This Month", value: 12, icon: "person_add" },
-		{ label: "Suspended", value: 2, icon: "person_off" },
-	];
+	// Check if user is admin
+	useEffect(() => {
+		if (!authLoading) {
+			if (!isAuthenticated) {
+				router.push("/login");
+				return;
+			}
+			if (authUser && authUser.role !== "admin") {
+				router.push("/feed");
+				return;
+			}
+		}
+	}, [authLoading, isAuthenticated, authUser, router]);
+
+	// Fetch users data
+	const fetchUsers = useCallback(async () => {
+		if (!authUser || authUser.role !== "admin") return;
+
+		setLoading(true);
+		try {
+			const response = await AdminService.getUsers({ role: "citizen" });
+			if (response.success) {
+				setUsers(response.data?.results || response.data || []);
+			}
+		} catch (error) {
+			console.error("Failed to fetch users:", error);
+		} finally {
+			setLoading(false);
+		}
+	}, [authUser]);
+
+	useEffect(() => {
+		if (authUser?.role === "admin") {
+			fetchUsers();
+		}
+	}, [authUser, fetchUsers]);
+
+	const citizens = users.filter((u) => u.role === "citizen" || !u.role);
+	const activeUsers = users.filter((u) => u.is_active !== false);
+
+	const userStats = stats
+		? [
+				{
+					label: "Total Citizens",
+					value: stats.total_citizens || citizens.length,
+					icon: "group",
+				},
+				{
+					label: "Active Users",
+					value: stats.active_users || activeUsers.length,
+					icon: "person",
+					accent: true,
+				},
+				{
+					label: "New This Month",
+					value: stats.new_this_month || 0,
+					icon: "person_add",
+				},
+				{
+					label: "Suspended",
+					value: stats.suspended || 0,
+					icon: "person_off",
+				},
+			]
+		: [
+				{
+					label: "Total Citizens",
+					value: citizens.length,
+					icon: "group",
+				},
+				{
+					label: "Active Users",
+					value: activeUsers.length,
+					icon: "person",
+					accent: true,
+				},
+				{ label: "New This Month", value: 0, icon: "person_add" },
+				{ label: "Suspended", value: 0, icon: "person_off" },
+			];
 
 	const tabs = [
 		{ id: "all", label: "All Users", count: citizens.length },
 		{ id: "active", label: "Active", count: activeUsers.length },
-		{ id: "suspended", label: "Suspended", count: 2 },
+		{
+			id: "suspended",
+			label: "Suspended",
+			count: users.filter((u) => u.is_active === false).length,
+		},
 	];
 
-	const filteredUsers = citizens.filter((user) => {
+	const filteredUsers = users.filter((user) => {
 		const matchesSearch =
 			!searchQuery ||
-			user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-			user.email.toLowerCase().includes(searchQuery.toLowerCase());
+			(user.full_name || user.username || "")
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase()) ||
+			(user.email || "")
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase());
 
 		const matchesStatus =
 			statusFilter === "all" ||
-			(statusFilter === "active" && user.isActive) ||
-			(statusFilter === "suspended" && !user.isActive);
+			(statusFilter === "active" && user.is_active !== false) ||
+			(statusFilter === "suspended" && user.is_active === false);
 
-		return matchesSearch && matchesStatus;
+		const matchesTab =
+			activeTab === "all" ||
+			(activeTab === "active" && user.is_active !== false) ||
+			(activeTab === "suspended" && user.is_active === false);
+
+		return matchesSearch && matchesStatus && matchesTab;
 	});
 
 	const handleEditUser = (user) => {
@@ -61,13 +153,38 @@ export default function AdminUsersPage() {
 		setShowEditModal(true);
 	};
 
-	const handleToggleStatus = (user) => {
-		console.log("Toggle status for:", user.id);
+	const handleToggleStatus = async (user) => {
+		try {
+			const response = await AdminService.toggleUserStatus(user.id);
+			if (response.success) {
+				fetchUsers(); // Refresh the list
+			}
+		} catch (error) {
+			console.error("Failed to toggle user status:", error);
+		}
 	};
 
-	const handleDeleteUser = (user) => {
-		console.log("Delete user:", user.id);
+	const handleDeleteUser = async (user) => {
+		if (!confirm("Are you sure you want to delete this user?")) return;
+
+		try {
+			const response = await AdminService.deleteUser(user.id);
+			if (response.success) {
+				fetchUsers(); // Refresh the list
+			}
+		} catch (error) {
+			console.error("Failed to delete user:", error);
+		}
 	};
+
+	// Show loading state
+	if (authLoading || loading) {
+		return (
+			<div className='min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center'>
+				<Loader size='lg' />
+			</div>
+		);
+	}
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>

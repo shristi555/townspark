@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "../ui";
-import { currentUser } from "../../data/dummy_data";
+import { useAuth } from "../../contexts/auth_context";
 import { useTheme } from "../../contexts/theme_context";
 
 const mainNavItems = [
@@ -49,7 +49,19 @@ export default function Sidebar({
 	className = "",
 }) {
 	const pathname = usePathname();
+	const router = useRouter();
+	const { user, isAuthenticated, logout } = useAuth();
 	const { darkMode, toggleDarkMode } = useTheme();
+
+	// Determine if we should show resolver/admin nav based on user role
+	const shouldShowResolverNav = showResolverNav || user?.role === "resolver";
+	const shouldShowAdminNav = showAdminNav || user?.role === "admin";
+
+	const handleLogout = async () => {
+		await logout();
+		router.push("/login");
+		onClose?.();
+	};
 
 	const NavLink = ({ item }) => {
 		const isActive =
@@ -136,25 +148,47 @@ export default function Sidebar({
 
 				{/* User Info */}
 				<div className='p-4 border-b border-border-light dark:border-border-dark'>
-					<Link
-						href='/profile'
-						onClick={onClose}
-						className='flex items-center gap-3 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
-					>
-						<Avatar
-							src={currentUser.avatar}
-							name={currentUser.name}
-							size='md'
-						/>
-						<div className='flex-1 min-w-0'>
-							<p className='text-sm font-semibold text-text-primary-light dark:text-text-primary-dark truncate'>
-								{currentUser.name}
-							</p>
-							<p className='text-xs text-text-secondary-light dark:text-text-secondary-dark truncate'>
-								@{currentUser.username}
-							</p>
-						</div>
-					</Link>
+					{isAuthenticated && user ? (
+						<Link
+							href='/profile'
+							onClick={onClose}
+							className='flex items-center gap-3 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
+						>
+							<Avatar
+								src={user.avatar}
+								name={user.full_name || user.username}
+								size='md'
+							/>
+							<div className='flex-1 min-w-0'>
+								<p className='text-sm font-semibold text-text-primary-light dark:text-text-primary-dark truncate'>
+									{user.full_name || user.username}
+								</p>
+								<p className='text-xs text-text-secondary-light dark:text-text-secondary-dark truncate'>
+									@{user.username}
+								</p>
+							</div>
+						</Link>
+					) : (
+						<Link
+							href='/login'
+							onClick={onClose}
+							className='flex items-center gap-3 p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
+						>
+							<div className='size-10 rounded-full bg-primary/10 flex items-center justify-center'>
+								<span className='material-symbols-outlined text-primary'>
+									person
+								</span>
+							</div>
+							<div className='flex-1 min-w-0'>
+								<p className='text-sm font-semibold text-text-primary-light dark:text-text-primary-dark truncate'>
+									Sign In
+								</p>
+								<p className='text-xs text-text-secondary-light dark:text-text-secondary-dark truncate'>
+									Access your account
+								</p>
+							</div>
+						</Link>
+					)}
 				</div>
 
 				{/* Navigation */}
@@ -165,7 +199,7 @@ export default function Sidebar({
 
 					<NavSection title='Account' items={accountNavItems} />
 
-					{showResolverNav && (
+					{shouldShowResolverNav && (
 						<>
 							<div className='h-px bg-border-light dark:bg-border-dark mx-4 my-2' />
 							<NavSection
@@ -175,7 +209,7 @@ export default function Sidebar({
 						</>
 					)}
 
-					{showAdminNav && (
+					{shouldShowAdminNav && (
 						<>
 							<div className='h-px bg-border-light dark:bg-border-dark mx-4 my-2' />
 							<NavSection title='Admin' items={adminNavItems} />
@@ -199,12 +233,28 @@ export default function Sidebar({
 					</button>
 
 					{/* Logout */}
-					<button className='flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-status-reported hover:bg-status-reported/10 transition-colors'>
-						<span className='material-symbols-outlined text-xl'>
-							logout
-						</span>
-						<span className='text-sm font-medium'>Logout</span>
-					</button>
+					{isAuthenticated ? (
+						<button
+							onClick={handleLogout}
+							className='flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-status-reported hover:bg-status-reported/10 transition-colors'
+						>
+							<span className='material-symbols-outlined text-xl'>
+								logout
+							</span>
+							<span className='text-sm font-medium'>Logout</span>
+						</button>
+					) : (
+						<Link
+							href='/login'
+							onClick={onClose}
+							className='flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-primary hover:bg-primary/10 transition-colors'
+						>
+							<span className='material-symbols-outlined text-xl'>
+								login
+							</span>
+							<span className='text-sm font-medium'>Sign In</span>
+						</Link>
+					)}
 				</div>
 			</aside>
 		</>

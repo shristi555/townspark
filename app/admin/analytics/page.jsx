@@ -1,20 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Header, Sidebar } from "../../components/layout";
 import { StatsGrid } from "../../components/features";
-import { Select, Card, Tabs, TabPanel } from "../../components/ui";
-import {
-	issues,
-	users,
-	departments,
-	platformStats as adminStats,
-} from "../../data/dummy_data";
+import { Select, Card, Tabs, TabPanel, Loader } from "../../components/ui";
+import { useAuth } from "../../contexts/auth_context";
+import { CoreService, AdminService } from "../../modules";
 
 export default function AdminAnalyticsPage() {
+	const router = useRouter();
+	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [timeRange, setTimeRange] = useState("30days");
 	const [activeTab, setActiveTab] = useState("overview");
+	const [loading, setLoading] = useState(true);
+	const [analytics, setAnalytics] = useState(null);
+
+	// Check if user is admin
+	useEffect(() => {
+		if (!authLoading) {
+			if (!isAuthenticated) {
+				router.push("/login");
+				return;
+			}
+			if (user && user.role !== "admin") {
+				router.push("/feed");
+				return;
+			}
+		}
+	}, [authLoading, isAuthenticated, user, router]);
+
+	// Fetch analytics data
+	useEffect(() => {
+		const fetchAnalytics = async () => {
+			if (!user || user.role !== "admin") return;
+
+			setLoading(true);
+			try {
+				const response = await CoreService.getAnalytics({ timeRange });
+				if (response.success) {
+					setAnalytics(response.data);
+				}
+			} catch (error) {
+				console.error("Failed to fetch analytics:", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		if (user?.role === "admin") {
+			fetchAnalytics();
+		}
+	}, [user, timeRange]);
 
 	const tabs = [
 		{ id: "overview", label: "Overview" },
@@ -23,72 +61,105 @@ export default function AdminAnalyticsPage() {
 		{ id: "performance", label: "Performance" },
 	];
 
-	const overviewStats = [
-		{
-			label: "Total Issues",
-			value: issues.length,
-			icon: "report",
-			trend: "+12%",
-			trendUp: true,
-		},
-		{
-			label: "Resolved",
-			value: issues.filter((i) => i.status === "resolved").length,
-			icon: "check_circle",
-			accent: true,
-			trend: "+8%",
-			trendUp: true,
-		},
-		{
-			label: "Active Users",
-			value: users.filter((u) => u.isActive).length,
-			icon: "people",
-			trend: "+5%",
-			trendUp: true,
-		},
-		{
-			label: "Avg. Resolution",
-			value: "2.3 days",
-			icon: "schedule",
-			trend: "-15%",
-			trendUp: true,
-		},
-	];
+	// Use analytics data if available, fallback to static values
+	const overviewStats = analytics
+		? [
+				{
+					label: "Total Issues",
+					value: analytics.total_issues || 0,
+					icon: "report",
+					trend: analytics.issues_trend || "+0%",
+					trendUp: !analytics.issues_trend?.startsWith("-"),
+				},
+				{
+					label: "Resolved",
+					value: analytics.resolved_issues || 0,
+					icon: "check_circle",
+					accent: true,
+					trend: analytics.resolved_trend || "+0%",
+					trendUp: !analytics.resolved_trend?.startsWith("-"),
+				},
+				{
+					label: "Active Users",
+					value: analytics.active_users || 0,
+					icon: "people",
+					trend: analytics.users_trend || "+0%",
+					trendUp: !analytics.users_trend?.startsWith("-"),
+				},
+				{
+					label: "Avg. Resolution",
+					value: analytics.avg_resolution_time || "N/A",
+					icon: "schedule",
+					trend: analytics.resolution_trend || "+0%",
+					trendUp: analytics.resolution_trend?.startsWith("-"),
+				},
+			]
+		: [
+				{
+					label: "Total Issues",
+					value: 0,
+					icon: "report",
+					trend: "+0%",
+					trendUp: true,
+				},
+				{
+					label: "Resolved",
+					value: 0,
+					icon: "check_circle",
+					accent: true,
+					trend: "+0%",
+					trendUp: true,
+				},
+				{
+					label: "Active Users",
+					value: 0,
+					icon: "people",
+					trend: "+0%",
+					trendUp: true,
+				},
+				{
+					label: "Avg. Resolution",
+					value: "N/A",
+					icon: "schedule",
+					trend: "+0%",
+					trendUp: true,
+				},
+			];
 
-	// Mock data for charts (displayed as styled cards)
-	const issuesByStatus = [
+	// Use analytics data for charts if available
+	const issuesByStatus = analytics?.issues_by_status || [
 		{
 			status: "Reported",
-			count: 24,
+			count: 0,
 			color: "bg-status-reported",
-			percentage: 30,
+			percentage: 0,
 		},
 		{
 			status: "Acknowledged",
-			count: 18,
+			count: 0,
 			color: "bg-status-acknowledged",
-			percentage: 22,
+			percentage: 0,
 		},
 		{
 			status: "In Progress",
-			count: 28,
+			count: 0,
 			color: "bg-status-progress",
-			percentage: 35,
+			percentage: 0,
 		},
 		{
 			status: "Resolved",
-			count: 10,
+			count: 0,
 			color: "bg-status-resolved",
-			percentage: 13,
+			percentage: 0,
 		},
 	];
 
-	const issuesByCategory = [
-		{ category: "Infrastructure", count: 32, percentage: 40 },
-		{ category: "Sanitation", count: 22, percentage: 28 },
-		{ category: "Safety", count: 14, percentage: 18 },
-		{ category: "Environment", count: 8, percentage: 10 },
-		{ category: "Other", count: 4, percentage: 4 },
+	const issuesByCategory = analytics?.issues_by_category || [
+		{ category: "Infrastructure", count: 0, percentage: 0 },
+		{ category: "Sanitation", count: 0, percentage: 0 },
+		{ category: "Safety", count: 0, percentage: 0 },
+		{ category: "Environment", count: 0, percentage: 0 },
+		{ category: "Other", count: 0, percentage: 0 },
 	];
 
 	const monthlyTrends = [
@@ -126,6 +197,15 @@ export default function AdminAnalyticsPage() {
 			rating: 4.6,
 		},
 	];
+
+	// Show loading state
+	if (authLoading || loading) {
+		return (
+			<div className='min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center'>
+				<Loader size='lg' />
+			</div>
+		);
+	}
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>

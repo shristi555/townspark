@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../contexts/theme_context";
-import { Button, Input, Select, Toggle } from "../components/ui";
-import { departments } from "../data/dummy_data";
+import { useAuth } from "../contexts/auth_context";
+import { Button, Input, Select, Toggle, FileDropzone } from "../components/ui";
+import { useCategories, useAreas } from "../hooks";
+import { CoreService } from "../modules/core";
 
 const userTypes = [
 	{
@@ -25,6 +27,7 @@ const userTypes = [
 export default function RegisterPage() {
 	const router = useRouter();
 	const { darkMode, toggleDarkMode } = useTheme();
+	const { register, registerResolver, isAuthenticated, user } = useAuth();
 	const [userType, setUserType] = useState("citizen");
 	const [step, setStep] = useState(1);
 	const [formData, setFormData] = useState({
@@ -42,6 +45,36 @@ export default function RegisterPage() {
 	const [errors, setErrors] = useState({});
 	const [loading, setLoading] = useState(false);
 	const [termsAccepted, setTermsAccepted] = useState(false);
+	const [apiError, setApiError] = useState("");
+
+	// Fetch departments from API
+	const [departments, setDepartments] = useState([]);
+	useEffect(() => {
+		const fetchDepartments = async () => {
+			try {
+				const response = await CoreService.getDepartments();
+				if (response.success) {
+					setDepartments(response.data || []);
+				}
+			} catch (error) {
+				console.error("Failed to fetch departments:", error);
+			}
+		};
+		fetchDepartments();
+	}, []);
+
+	// Redirect if already authenticated
+	useEffect(() => {
+		if (isAuthenticated && user) {
+			if (user.role === "admin") {
+				router.push("/admin");
+			} else if (user.role === "resolver") {
+				router.push("/resolver");
+			} else {
+				router.push("/feed");
+			}
+		}
+	}, [isAuthenticated, user, router]);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -49,6 +82,7 @@ export default function RegisterPage() {
 		if (errors[name]) {
 			setErrors((prev) => ({ ...prev, [name]: "" }));
 		}
+		setApiError("");
 	};
 
 	const validateStep1 = () => {
@@ -109,13 +143,47 @@ export default function RegisterPage() {
 		}
 
 		setLoading(true);
-		await new Promise((resolve) => setTimeout(resolve, 1500));
-		setLoading(false);
+		setApiError("");
 
-		if (userType === "resolver") {
-			router.push("/resolver/pending");
-		} else {
-			router.push("/feed");
+		try {
+			let result;
+
+			if (userType === "resolver") {
+				// Register as resolver
+				result = await registerResolver({
+					email: formData.email,
+					password: formData.password,
+					full_name: formData.name,
+					phone_number: formData.phone,
+					department: formData.department,
+					employee_id: formData.employeeId,
+					designation: formData.designation,
+				});
+			} else {
+				// Register as citizen
+				result = await register({
+					email: formData.email,
+					password: formData.password,
+					full_name: formData.name,
+					phone_number: formData.phone,
+				});
+			}
+
+			if (result.success) {
+				if (userType === "resolver") {
+					router.push("/resolver/pending");
+				} else {
+					router.push("/feed");
+				}
+			} else {
+				setApiError(
+					result.error || "Registration failed. Please try again."
+				);
+			}
+		} catch (error) {
+			setApiError("An unexpected error occurred. Please try again.");
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -192,6 +260,11 @@ export default function RegisterPage() {
 
 						{step === 1 ? (
 							<div className='space-y-6'>
+								{apiError && (
+									<div className='p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm'>
+										{apiError}
+									</div>
+								)}
 								{/* User Type Selection */}
 								<div className='grid grid-cols-2 gap-4'>
 									{userTypes.map((type) => (
@@ -297,6 +370,11 @@ export default function RegisterPage() {
 							</div>
 						) : (
 							<form onSubmit={handleSubmit} className='space-y-6'>
+								{apiError && (
+									<div className='p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm'>
+										{apiError}
+									</div>
+								)}
 								{userType === "resolver" && (
 									<>
 										<Select

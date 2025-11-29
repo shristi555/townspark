@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useTheme } from "../contexts/theme_context";
 import { Button } from "../components/ui";
 import { Footer } from "../components/layout";
-import { platformStats } from "../data/dummy_data";
+import { CoreService } from "../modules";
 
 const features = [
 	{
@@ -58,6 +59,45 @@ const howItWorks = [
 
 export default function LandingPage() {
 	const { darkMode, toggleDarkMode } = useTheme();
+	const [stats, setStats] = useState({
+		issuesReported: "10K+",
+		issuesResolved: "8.5K+",
+		activeMembers: "5K+",
+		avgResolutionTime: "48h",
+	});
+
+	// Fetch platform stats on mount
+	useEffect(() => {
+		const fetchStats = async () => {
+			try {
+				const response = await CoreService.getPlatformStats();
+				if (response.success && response.data) {
+					setStats({
+						issuesReported:
+							response.data.total_issues ||
+							response.data.issuesReported ||
+							"10K+",
+						issuesResolved:
+							response.data.resolved_issues ||
+							response.data.issuesResolved ||
+							"8.5K+",
+						activeMembers:
+							response.data.total_users ||
+							response.data.activeMembers ||
+							"5K+",
+						avgResolutionTime:
+							response.data.avg_resolution_time ||
+							response.data.avgResolutionTime ||
+							"48h",
+					});
+				}
+			} catch (error) {
+				console.error("Failed to fetch platform stats:", error);
+				// Keep default stats on error
+			}
+		};
+		fetchStats();
+	}, []);
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>
@@ -173,19 +213,19 @@ export default function LandingPage() {
 					<div className='mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto'>
 						{[
 							{
-								value: platformStats.issuesReported,
+								value: stats.issuesReported,
 								label: "Issues Reported",
 							},
 							{
-								value: platformStats.issuesResolved,
+								value: stats.issuesResolved,
 								label: "Issues Resolved",
 							},
 							{
-								value: platformStats.activeMembers,
+								value: stats.activeMembers,
 								label: "Active Users",
 							},
 							{
-								value: platformStats.avgResolutionTime,
+								value: stats.avgResolutionTime,
 								label: "Avg Resolution",
 							},
 						].map((stat, idx) => (

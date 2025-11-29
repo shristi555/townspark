@@ -1,37 +1,112 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Header, BottomNavigation, Sidebar } from "../components/layout";
 import { IssueList, StatsGrid } from "../components/features";
-import { Avatar, Button, Tabs, TabPanel, Badge } from "../components/ui";
-import { currentUser, issues } from "../data/dummy_data";
+import {
+	Avatar,
+	Button,
+	Tabs,
+	TabPanel,
+	Badge,
+	Loader,
+} from "../components/ui";
+import { useAuth } from "../contexts/auth_context";
+import { useMyIssues, useMyBookmarks } from "../hooks";
+import { UserService } from "../modules/users";
 import Link from "next/link";
 
 export default function ProfilePage() {
+	const router = useRouter();
+	const { user, isAuthenticated, loading: authLoading } = useAuth();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [activeTab, setActiveTab] = useState("reported");
 
-	const userIssues = issues.filter((i) => i.author?.id === currentUser.id);
-	const reportedIssues = userIssues.filter((i) => i.status !== "resolved");
-	const resolvedIssues = userIssues.filter((i) => i.status === "resolved");
+	// Fetch user's issues
+	const { issues: myIssues, loading: issuesLoading } = useMyIssues();
+	const { data: bookmarkedIssues, loading: bookmarksLoading } =
+		useMyBookmarks();
 
+	// State for upvoted issues
+	const [upvotedIssues, setUpvotedIssues] = useState([]);
+	const [upvotedLoading, setUpvotedLoading] = useState(true);
+
+	// Fetch upvoted issues
+	useEffect(() => {
+		const fetchUpvoted = async () => {
+			try {
+				const response = await UserService.getMyUpvoted();
+				if (response.success) {
+					setUpvotedIssues(
+						response.data?.results || response.data || []
+					);
+				}
+			} catch (error) {
+				console.error("Failed to fetch upvoted issues:", error);
+			} finally {
+				setUpvotedLoading(false);
+			}
+		};
+		if (isAuthenticated) {
+			fetchUpvoted();
+		}
+	}, [isAuthenticated]);
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authLoading && !isAuthenticated) {
+			router.push("/login");
+		}
+	}, [authLoading, isAuthenticated, router]);
+
+	// Show loading while checking auth
+	if (authLoading || !user) {
+		return (
+			<div className='min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark'>
+				<Loader size='lg' />
+			</div>
+		);
+	}
+
+	// Filter issues
+	const reportedIssues =
+		myIssues?.filter((i) => i.status !== "resolved") || [];
+	const resolvedIssues =
+		myIssues?.filter((i) => i.status === "resolved") || [];
+	const bookmarks = bookmarkedIssues?.results || bookmarkedIssues || [];
+	const upvoted = upvotedIssues || [];
+
+	// Build stats from user data
 	const userStats = [
-		{ label: "Issues Reported", value: userIssues.length, icon: "flag" },
+		{
+			label: "Issues Reported",
+			value: user.stats?.issues_reported || myIssues?.length || 0,
+			icon: "flag",
+		},
 		{
 			label: "Resolved",
-			value: resolvedIssues.length,
+			value: user.stats?.issues_resolved || resolvedIssues.length,
 			icon: "check_circle",
 			accent: true,
 		},
-		{ label: "Upvotes Received", value: 234, icon: "thumb_up" },
-		{ label: "Comments", value: 56, icon: "chat" },
+		{
+			label: "Upvotes Received",
+			value: user.stats?.upvotes_received || 0,
+			icon: "thumb_up",
+		},
+		{
+			label: "Comments",
+			value: user.stats?.comments_made || 0,
+			icon: "chat",
+		},
 	];
 
 	const tabs = [
 		{ id: "reported", label: "Reported", count: reportedIssues.length },
 		{ id: "resolved", label: "Resolved", count: resolvedIssues.length },
-		{ id: "bookmarked", label: "Bookmarked", count: 5 },
-		{ id: "upvoted", label: "Upvoted", count: 12 },
+		{ id: "bookmarked", label: "Bookmarked", count: bookmarks.length },
+		{ id: "upvoted", label: "Upvoted", count: upvoted.length },
 	];
 
 	return (
@@ -39,8 +114,8 @@ export default function ProfilePage() {
 			<Sidebar
 				isOpen={sidebarOpen}
 				onClose={() => setSidebarOpen(false)}
-				showResolverNav={currentUser.role === "resolver"}
-				showAdminNav={currentUser.role === "admin"}
+				showResolverNav={user?.role === "resolver"}
+				showAdminNav={user?.role === "admin"}
 			/>
 
 			<div className='md:ml-72'>
@@ -77,8 +152,8 @@ export default function ProfilePage() {
 						<div className='px-4 sm:px-6 pb-6'>
 							<div className='flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-8'>
 								<Avatar
-									src={currentUser.avatar}
-									name={currentUser.name}
+									src={user.profile_image || user.avatar}
+									name={user.full_name || user.name}
 									size='xl'
 									className='ring-4 ring-card-light dark:ring-card-dark'
 								/>
@@ -86,10 +161,12 @@ export default function ProfilePage() {
 									<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
 										<div>
 											<h1 className='text-xl font-bold text-text-primary-light dark:text-text-primary-dark'>
-												{currentUser.name}
+												{user.full_name || user.name}
 											</h1>
 											<p className='text-text-secondary-light dark:text-text-secondary-dark'>
-												@{currentUser.username}
+												@
+												{user.username ||
+													user.email?.split("@")[0]}
 											</p>
 										</div>
 										<Link href='/settings/profile'>
@@ -105,20 +182,20 @@ export default function ProfilePage() {
 							</div>
 
 							{/* Bio */}
-							{currentUser.bio && (
+							{user.bio && (
 								<p className='mt-4 text-text-secondary-light dark:text-text-secondary-dark'>
-									{currentUser.bio}
+									{user.bio}
 								</p>
 							)}
 
 							{/* Meta Info */}
 							<div className='flex flex-wrap items-center gap-4 mt-4 text-sm text-text-secondary-light dark:text-text-secondary-dark'>
-								{currentUser.location && (
+								{user.location && (
 									<div className='flex items-center gap-1'>
 										<span className='material-symbols-outlined text-lg'>
 											location_on
 										</span>
-										{currentUser.location}
+										{user.location}
 									</div>
 								)}
 								<div className='flex items-center gap-1'>
@@ -127,24 +204,24 @@ export default function ProfilePage() {
 									</span>
 									Joined{" "}
 									{new Date(
-										currentUser.joinedAt
+										user.created_at ||
+											user.joinedAt ||
+											Date.now()
 									).toLocaleDateString("en-US", {
 										month: "long",
 										year: "numeric",
 									})}
 								</div>
-								{currentUser.role !== "citizen" && (
+								{user.role !== "citizen" && (
 									<Badge
 										status={
-											currentUser.role === "resolver"
+											user.role === "resolver"
 												? "acknowledged"
 												: "resolved"
 										}
 									>
-										{currentUser.role
-											.charAt(0)
-											.toUpperCase() +
-											currentUser.role.slice(1)}
+										{user.role.charAt(0).toUpperCase() +
+											user.role.slice(1)}
 									</Badge>
 								)}
 							</div>
@@ -167,6 +244,7 @@ export default function ProfilePage() {
 							<TabPanel id='reported' activeTab={activeTab}>
 								<IssueList
 									issues={reportedIssues}
+									loading={issuesLoading}
 									showFilters={false}
 									showSort={false}
 									cardVariant='compact'
@@ -178,6 +256,7 @@ export default function ProfilePage() {
 							<TabPanel id='resolved' activeTab={activeTab}>
 								<IssueList
 									issues={resolvedIssues}
+									loading={issuesLoading}
 									showFilters={false}
 									showSort={false}
 									cardVariant='compact'
@@ -188,7 +267,8 @@ export default function ProfilePage() {
 
 							<TabPanel id='bookmarked' activeTab={activeTab}>
 								<IssueList
-									issues={issues.slice(0, 3)}
+									issues={bookmarks}
+									loading={bookmarksLoading}
 									showFilters={false}
 									showSort={false}
 									cardVariant='compact'
@@ -199,7 +279,8 @@ export default function ProfilePage() {
 
 							<TabPanel id='upvoted' activeTab={activeTab}>
 								<IssueList
-									issues={issues.slice(2, 5)}
+									issues={upvoted}
+									loading={upvotedLoading}
 									showFilters={false}
 									showSort={false}
 									cardVariant='compact'

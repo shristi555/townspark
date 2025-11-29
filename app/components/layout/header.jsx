@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useTheme } from "../../contexts/theme_context";
+import { useAuth } from "../../contexts/auth_context";
 import { Avatar } from "../ui";
-import { currentUser } from "../../data/dummy_data";
 
 export default function Header({
 	title,
@@ -18,6 +18,7 @@ export default function Header({
 	className = "",
 }) {
 	const { darkMode, toggleDarkMode } = useTheme();
+	const { user, isAuthenticated } = useAuth();
 
 	const handleBack = () => {
 		if (onBackClick) {
@@ -99,15 +100,26 @@ export default function Header({
 					</Link>
 				)}
 
-				{showUserMenu && (
-					<Link href='/profile' className='flex items-center gap-2'>
-						<Avatar
-							src={currentUser.avatar}
-							name={currentUser.name}
-							size='sm'
-						/>
-					</Link>
-				)}
+				{showUserMenu &&
+					(isAuthenticated && user ? (
+						<Link
+							href='/profile'
+							className='flex items-center gap-2'
+						>
+							<Avatar
+								src={user.avatar}
+								name={user.full_name || user.username}
+								size='sm'
+							/>
+						</Link>
+					) : (
+						<Link
+							href='/login'
+							className='flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors'
+						>
+							Sign In
+						</Link>
+					))}
 
 				{/* Custom actions */}
 				{actions}

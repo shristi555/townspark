@@ -1,20 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../contexts/theme_context";
+import { useAuth } from "../contexts/auth_context";
 import { Button, Input } from "../components/ui";
 
 export default function LoginPage() {
 	const router = useRouter();
 	const { darkMode, toggleDarkMode } = useTheme();
+	const { login, isAuthenticated, loading: authLoading, user } = useAuth();
 	const [formData, setFormData] = useState({
 		email: "",
 		password: "",
 	});
 	const [errors, setErrors] = useState({});
 	const [loading, setLoading] = useState(false);
+	const [apiError, setApiError] = useState("");
+
+	// Redirect if already authenticated
+	useEffect(() => {
+		if (isAuthenticated && user) {
+			// Redirect based on role
+			if (user.role === "admin") {
+				router.push("/admin");
+			} else if (user.role === "resolver") {
+				router.push("/resolver");
+			} else {
+				router.push("/feed");
+			}
+		}
+	}, [isAuthenticated, user, router]);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -22,6 +39,7 @@ export default function LoginPage() {
 		if (errors[name]) {
 			setErrors((prev) => ({ ...prev, [name]: "" }));
 		}
+		setApiError("");
 	};
 
 	const validate = () => {
@@ -46,12 +64,17 @@ export default function LoginPage() {
 		}
 
 		setLoading(true);
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-		setLoading(false);
+		setApiError("");
 
-		// Navigate to feed (simulating successful login)
-		router.push("/feed");
+		const result = await login(formData.email, formData.password);
+
+		if (!result.success) {
+			setApiError(
+				result.error || "Invalid credentials. Please try again."
+			);
+			setLoading(false);
+		}
+		// If successful, useEffect will handle redirect
 	};
 
 	return (
@@ -91,6 +114,12 @@ export default function LoginPage() {
 						</p>
 
 						<form onSubmit={handleSubmit} className='space-y-6'>
+							{apiError && (
+								<div className='p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm'>
+									{apiError}
+								</div>
+							)}
+
 							<Input
 								label='Email'
 								type='email'

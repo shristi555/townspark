@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { Header, BottomNavigation } from "../../components/layout";
 import {
 	CommentSection,
@@ -15,18 +15,52 @@ import {
 	Modal,
 	Select,
 	Textarea,
+	Loader,
 } from "../../components/ui";
-import { issues, currentUser } from "../../data/dummy_data";
+import { useAuth } from "../../contexts/auth_context";
+import { useIssue, useComments, useIssueMutations } from "../../hooks";
+import { ResolverService } from "../../modules/resolver";
 
 export default function IssueDetailPage() {
 	const params = useParams();
-	const issue = issues.find((i) => i.id === params.id) || issues[0];
+	const router = useRouter();
+	const { user, isAuthenticated, loading: authLoading } = useAuth();
+
+	// Fetch issue details
+	const {
+		issue,
+		loading: issueLoading,
+		error,
+		refetch: refetchIssue,
+		setIssue,
+	} = useIssue(params.id);
+
+	// Fetch comments
+	const {
+		comments,
+		loading: commentsLoading,
+		addComment,
+		deleteComment,
+		refetch: refetchComments,
+	} = useComments(params.id);
+
+	// Issue mutations
+	const { upvote, removeUpvote, bookmark, removeBookmark } =
+		useIssueMutations();
+
 	const [showUpdateModal, setShowUpdateModal] = useState(false);
 	const [upvoted, setUpvoted] = useState(false);
 	const [bookmarked, setBookmarked] = useState(false);
 
-	const isResolver =
-		currentUser.role === "resolver" || currentUser.role === "admin";
+	// Initialize upvote/bookmark state from issue data
+	useEffect(() => {
+		if (issue) {
+			setUpvoted(issue.has_upvoted || false);
+			setBookmarked(issue.has_bookmarked || false);
+		}
+	}, [issue]);
+
+	const isResolver = user?.role === "resolver" || user?.role === "admin";
 
 	const formatDate = (dateString) => {
 		return new Date(dateString).toLocaleDateString("en-US", {
@@ -38,13 +72,100 @@ export default function IssueDetailPage() {
 		});
 	};
 
-	const handleUpvote = () => {
-		setUpvoted(!upvoted);
+	const handleUpvote = async () => {
+		if (!isAuthenticated) {
+			router.push("/login");
+			return;
+		}
+
+		try {
+			if (upvoted) {
+				const response = await removeUpvote(params.id);
+				if (response.success) {
+					setUpvoted(false);
+					setIssue((prev) => ({
+						...prev,
+						upvotes_count: (prev?.upvotes_count || 1) - 1,
+					}));
+				}
+			} else {
+				const response = await upvote(params.id);
+				if (response.success) {
+					setUpvoted(true);
+					setIssue((prev) => ({
+						...prev,
+						upvotes_count: (prev?.upvotes_count || 0) + 1,
+					}));
+				}
+			}
+		} catch (error) {
+			console.error("Upvote error:", error);
+		}
 	};
 
-	const handleBookmark = () => {
-		setBookmarked(!bookmarked);
+	const handleBookmark = async () => {
+		if (!isAuthenticated) {
+			router.push("/login");
+			return;
+		}
+
+		try {
+			if (bookmarked) {
+				const response = await removeBookmark(params.id);
+				if (response.success) {
+					setBookmarked(false);
+				}
+			} else {
+				const response = await bookmark(params.id);
+				if (response.success) {
+					setBookmarked(true);
+				}
+			}
+		} catch (error) {
+			console.error("Bookmark error:", error);
+		}
 	};
+
+	const handleAddComment = async (content) => {
+		if (!isAuthenticated) {
+			router.push("/login");
+			return;
+		}
+		return addComment(content);
+	};
+
+	// Show loading state
+	if (issueLoading || authLoading) {
+		return (
+			<div className='min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark'>
+				<Loader size='lg' />
+			</div>
+		);
+	}
+
+	// Show error state
+	if (error || !issue) {
+		return (
+			<div className='min-h-screen bg-background-light dark:bg-background-dark'>
+				<Header title='Issue Details' showBackButton />
+				<div className='flex flex-col items-center justify-center p-12'>
+					<span className='material-symbols-outlined text-6xl text-text-secondary-light dark:text-text-secondary-dark mb-4'>
+						error
+					</span>
+					<h2 className='text-xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2'>
+						Issue Not Found
+					</h2>
+					<p className='text-text-secondary-light dark:text-text-secondary-dark mb-4'>
+						{error ||
+							"The issue you're looking for doesn't exist or has been removed."}
+					</p>
+					<Button onClick={() => router.push("/feed")}>
+						Back to Feed
+					</Button>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>
@@ -59,16 +180,29 @@ export default function IssueDetailPage() {
 							{/* Author Info */}
 							<div className='flex items-center gap-3 p-4 border-b border-border-light dark:border-border-dark'>
 								<Avatar
-									src={issue.author?.avatar}
-									name={issue.author?.name}
+									src={
+										issue.author?.profile_image ||
+										issue.author?.avatar
+									}
+									name={
+										issue.author?.full_name ||
+										issue.author?.name ||
+										"Anonymous"
+									}
 									size='md'
 								/>
 								<div className='flex-1 min-w-0'>
 									<p className='font-semibold text-text-primary-light dark:text-text-primary-dark'>
-										{issue.author?.name}
+										{issue.is_anonymous
+											? "Anonymous"
+											: issue.author?.full_name ||
+												issue.author?.name}
 									</p>
 									<p className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
-										Posted on {formatDate(issue.createdAt)}
+										Posted on{" "}
+										{formatDate(
+											issue.created_at || issue.createdAt
+										)}
 									</p>
 								</div>
 								<Badge status={issue.status} />
@@ -161,8 +295,9 @@ export default function IssueDetailPage() {
 										thumb_up
 									</span>
 									<span className='text-sm font-medium'>
-										{(issue.upvotes || 0) +
-											(upvoted ? 1 : 0)}
+										{issue.upvotes_count ||
+											issue.upvotes ||
+											0}
 									</span>
 								</button>
 
@@ -171,7 +306,9 @@ export default function IssueDetailPage() {
 										chat_bubble
 									</span>
 									<span className='text-sm font-medium'>
-										{issue.comments || 0}
+										{issue.comments_count ||
+											issue.comments ||
+											0}
 									</span>
 								</button>
 
@@ -211,11 +348,11 @@ export default function IssueDetailPage() {
 								Comments
 							</h2>
 							<CommentSection
-								comments={issue.commentsList || []}
-								currentUser={currentUser}
-								onAddComment={(comment) =>
-									console.log("Add comment:", comment)
-								}
+								comments={comments || issue.commentsList || []}
+								loading={commentsLoading}
+								currentUser={user}
+								onAddComment={handleAddComment}
+								onDeleteComment={deleteComment}
 							/>
 						</div>
 					</div>
@@ -252,7 +389,11 @@ export default function IssueDetailPage() {
 						<div className='bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark p-4'>
 							<StatusTimeline
 								currentStatus={issue.status}
-								updates={issue.statusUpdates || []}
+								updates={
+									issue.status_updates ||
+									issue.statusUpdates ||
+									[]
+								}
 							/>
 						</div>
 
@@ -272,10 +413,10 @@ export default function IssueDetailPage() {
 								</div>
 								<div className='flex items-center justify-between'>
 									<span className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
-										Department
+										Category
 									</span>
 									<span className='text-sm font-medium text-text-primary-light dark:text-text-primary-dark'>
-										{issue.department || "Unassigned"}
+										{issue.category || "Uncategorized"}
 									</span>
 								</div>
 								<div className='flex items-center justify-between'>
@@ -283,7 +424,9 @@ export default function IssueDetailPage() {
 										Assigned To
 									</span>
 									<span className='text-sm font-medium text-text-primary-light dark:text-text-primary-dark'>
-										{issue.assignedTo || "Unassigned"}
+										{issue.assigned_to?.full_name ||
+											issue.assignedTo ||
+											"Unassigned"}
 									</span>
 								</div>
 							</div>
@@ -297,6 +440,11 @@ export default function IssueDetailPage() {
 				isOpen={showUpdateModal}
 				onClose={() => setShowUpdateModal(false)}
 				currentStatus={issue.status}
+				issueId={issue.id}
+				onSuccess={() => {
+					setShowUpdateModal(false);
+					refetchIssue();
+				}}
 			/>
 
 			<BottomNavigation />
@@ -304,14 +452,39 @@ export default function IssueDetailPage() {
 	);
 }
 
-function UpdateStatusModal({ isOpen, onClose, currentStatus }) {
+function UpdateStatusModal({
+	isOpen,
+	onClose,
+	currentStatus,
+	issueId,
+	onSuccess,
+}) {
 	const [status, setStatus] = useState(currentStatus);
 	const [message, setMessage] = useState("");
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
 
-	const handleSubmit = (e) => {
+	const handleSubmit = async (e) => {
 		e.preventDefault();
-		console.log("Update status:", { status, message });
-		onClose();
+		setLoading(true);
+		setError("");
+
+		try {
+			const response = await ResolverService.updateIssueStatus(issueId, {
+				status,
+				resolution_notes: message,
+			});
+
+			if (response.success) {
+				onSuccess?.();
+			} else {
+				setError(response.error || "Failed to update status");
+			}
+		} catch (err) {
+			setError("An unexpected error occurred");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -322,6 +495,12 @@ function UpdateStatusModal({ isOpen, onClose, currentStatus }) {
 			size='md'
 		>
 			<form onSubmit={handleSubmit} className='space-y-4'>
+				{error && (
+					<div className='p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm'>
+						{error}
+					</div>
+				)}
+
 				<Select
 					label='New Status'
 					value={status}
@@ -350,10 +529,11 @@ function UpdateStatusModal({ isOpen, onClose, currentStatus }) {
 						variant='outline'
 						onClick={onClose}
 						className='flex-1'
+						disabled={loading}
 					>
 						Cancel
 					</Button>
-					<Button type='submit' className='flex-1'>
+					<Button type='submit' className='flex-1' loading={loading}>
 						Update Status
 					</Button>
 				</div>
