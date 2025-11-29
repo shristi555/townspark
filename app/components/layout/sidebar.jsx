@@ -120,7 +120,7 @@ export default function Sidebar({
 			<aside
 				className={`fixed top-0 left-0 bottom-0 w-72 bg-card-light dark:bg-card-dark border-r border-border-light dark:border-border-dark z-50 transform transition-transform duration-300 ${
 					isOpen ? "translate-x-0" : "-translate-x-full"
-				} md:translate-x-0 md:static md:z-auto overflow-y-auto ${className}`}
+				} md:translate-x-0 md:fixed md:z-40 overflow-y-auto ${className}`}
 			>
 				{/* Header */}
 				<div className='flex items-center justify-between p-4 border-b border-border-light dark:border-border-dark'>

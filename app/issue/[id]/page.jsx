@@ -478,7 +478,15 @@ function UpdateStatusModal({
 			if (response.success) {
 				onSuccess?.();
 			} else {
-				setError(response.error || "Failed to update status");
+				// Extract error message safely
+				const errorMsg =
+					response.errorMessage ||
+					(typeof response.error === "string"
+						? response.error
+						: response.error?.message ||
+							response.error?.detail ||
+							"Failed to update status");
+				setError(errorMsg);
 			}
 		} catch (err) {
 			setError("An unexpected error occurred");

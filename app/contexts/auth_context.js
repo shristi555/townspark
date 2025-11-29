@@ -3,6 +3,7 @@
 /**
  * Auth Context
  * Manages authentication state across the application
+ * Uses cookie-based token storage for SSR compatibility
  */
 
 import {
@@ -12,29 +13,145 @@ import {
 	useEffect,
 	useCallback,
 } from "react";
-import { AuthService } from "../modules/auth";
-import { UserService } from "../modules/users";
-import { TokenManager } from "../modules/api/http_client";
+import { AuthService, UserService, TokenManager } from "../modules";
 
 const AuthContext = createContext(null);
 
 /**
- * Helper function to extract error message from API response
- * @param {any} error - Error object or string
- * @returns {string}
+ * User-friendly error messages for authentication operations
  */
-const extractErrorMessage = (error) => {
-	if (!error) return "An unknown error occurred";
-	if (typeof error === "string") return error;
-	if (typeof error === "object") {
+const AUTH_ERROR_MESSAGES = {
+	login: {
+		default:
+			"Unable to sign in. Please check your credentials and try again.",
+		network: "Connection failed. Please check your internet and try again.",
+		invalid_credentials: "Invalid email or password. Please try again.",
+		account_locked: "Your account has been locked. Please contact support.",
+		account_inactive: "Your account is inactive. Please verify your email.",
+		too_many_attempts: "Too many failed attempts. Please try again later.",
+	},
+	register: {
+		default: "Unable to create account. Please try again.",
+		email_exists: "An account with this email already exists.",
+		invalid_data: "Please check your information and try again.",
+		password_weak: "Password is too weak. Please use a stronger password.",
+	},
+	registerResolver: {
+		default: "Unable to submit resolver application. Please try again.",
+		invalid_credentials: "Invalid professional credentials provided.",
+		pending_application: "You already have a pending application.",
+	},
+	fetchUser: {
+		default: "Unable to load your profile. Please refresh the page.",
+		unauthorized: "Your session has expired. Please sign in again.",
+	},
+	logout: {
+		default:
+			"Unable to sign out properly. Your session will expire automatically.",
+	},
+};
+
+/**
+ * Log authentication errors with detailed information for developers
+ * @param {string} action - The action being performed (login, register, etc.)
+ * @param {any} error - The error object or response
+ * @param {Object} context - Additional context information
+ */
+const logAuthError = (action, error, context = {}) => {
+	const timestamp = new Date().toISOString();
+
+	console.group(`🔐 [AuthContext] ${action} Error - ${timestamp}`);
+	console.error("Action:", action);
+	console.error("Error:", error);
+
+	const status = error?.statusCode || error?.status;
+	if (status) console.error("Status:", status);
+	if (error?.error_code || error?.errorCode)
+		console.error("Error Code:", error.error_code || error.errorCode);
+	if (error?.errors) console.error("Validation Errors:", error.errors);
+	if (error?.devMessage) console.error("Dev Message:", error.devMessage);
+
+	if (Object.keys(context).length > 0) {
+		console.error("Context:", context);
+	}
+
+	console.groupEnd();
+};
+
+/**
+ * Extract user-friendly error message from API response
+ * @param {any} error - Error object or string
+ * @param {string} action - The action being performed
+ * @returns {string} User-friendly error message
+ */
+const getAuthErrorMessage = (error, action) => {
+	const actionMessages = AUTH_ERROR_MESSAGES[action] || {};
+
+	// Handle network errors
+	if (
+		!error ||
+		error === "Network Error" ||
+		error?.message === "Network Error"
+	) {
 		return (
-			error.message ||
-			error.detail ||
-			error.error ||
-			JSON.stringify(error)
+			actionMessages.network ||
+			"Connection failed. Please check your internet."
 		);
 	}
-	return String(error);
+
+	// Handle string errors
+	if (typeof error === "string") {
+		// Check if it's a known error type
+		const lowerError = error.toLowerCase();
+		if (
+			lowerError.includes("credential") ||
+			lowerError.includes("password")
+		) {
+			return actionMessages.invalid_credentials || error;
+		}
+		if (lowerError.includes("email") && lowerError.includes("exist")) {
+			return actionMessages.email_exists || error;
+		}
+		return error;
+	}
+
+	// Handle object errors
+	if (typeof error === "object") {
+		// Check for specific error codes
+		if (error.error_code) {
+			const codeMessage = actionMessages[error.error_code];
+			if (codeMessage) return codeMessage;
+		}
+
+		// Check for user-friendly message from API
+		if (typeof error.message === "string" && error.message.length < 200) {
+			return error.message;
+		}
+		if (typeof error.detail === "string" && error.detail.length < 200) {
+			return error.detail;
+		}
+
+		// Handle nested error
+		if (error.error) {
+			return getAuthErrorMessage(error.error, action);
+		}
+
+		// Handle validation errors
+		if (error.errors && typeof error.errors === "object") {
+			const firstError = Object.values(error.errors)[0];
+			if (Array.isArray(firstError) && firstError.length > 0) {
+				return firstError[0];
+			}
+			if (typeof firstError === "string") {
+				return firstError;
+			}
+		}
+	}
+
+	return (
+		actionMessages.default ||
+		"An unexpected error occurred. Please try again."
+	);
 };
 
 export function AuthProvider({ children }) {
@@ -53,13 +170,31 @@ export function AuthProvider({ children }) {
 				setError(null);
 			} else {
 				setUser(null);
-				// Don't set error for 401 - just means not logged in
-				if (response.status !== 401) {
-					setError(response.error);
+				// Don't set error or log for 401 - just means not logged in
+				// Check response.statusCode (from ApiResponse), response.status, and error.status for 401
+				const status =
+					response.statusCode ||
+					response.status ||
+					response.error?.status;
+				if (status !== 401 && status !== "401") {
+					logAuthError("fetchUser", response, {
+						status: status,
+					});
+					const errorMsg = getAuthErrorMessage(
+						response.error,
+						"fetchUser"
+					);
+					setError(errorMsg);
 				}
 			}
 		} catch (err) {
-			console.error("Failed to fetch user:", err);
+			// Don't log 401 errors as they just mean user is not logged in
+			const errStatus =
+				err?.statusCode || err?.status || err?.response?.status;
+			if (errStatus !== 401) {
+				logAuthError("fetchUser", err, { isUnexpected: true });
+				console.error("Failed to fetch user:", err);
+			}
 			setUser(null);
 		}
 	}, []);
@@ -100,11 +235,13 @@ export function AuthProvider({ children }) {
 					return { success: true };
 				}
 
-				const errorMsg = extractErrorMessage(response.error);
+				logAuthError("login", response, { email });
+				const errorMsg = getAuthErrorMessage(response.error, "login");
 				setError(errorMsg);
 				return { success: false, error: errorMsg };
 			} catch (err) {
-				const errorMsg = "An unexpected error occurred";
+				logAuthError("login", err, { email, isUnexpected: true });
+				const errorMsg = getAuthErrorMessage(err, "login");
 				setError(errorMsg);
 				return { success: false, error: errorMsg };
 			} finally {
@@ -135,11 +272,19 @@ export function AuthProvider({ children }) {
 					return { success: true, data: response.data };
 				}
 
-				const errorMsg = extractErrorMessage(response.error);
+				logAuthError("register", response, { email: userData?.email });
+				const errorMsg = getAuthErrorMessage(
+					response.error,
+					"register"
+				);
 				setError(errorMsg);
 				return { success: false, error: errorMsg };
 			} catch (err) {
-				const errorMsg = "Registration failed";
+				logAuthError("register", err, {
+					email: userData?.email,
+					isUnexpected: true,
+				});
+				const errorMsg = getAuthErrorMessage(err, "register");
 				setError(errorMsg);
 				return { success: false, error: errorMsg };
 			} finally {
@@ -165,11 +310,21 @@ export function AuthProvider({ children }) {
 				return { success: true, data: response.data };
 			}
 
-			const errorMsg = extractErrorMessage(response.error);
+			logAuthError("registerResolver", response, {
+				email: resolverData?.email,
+			});
+			const errorMsg = getAuthErrorMessage(
+				response.error,
+				"registerResolver"
+			);
 			setError(errorMsg);
 			return { success: false, error: errorMsg };
 		} catch (err) {
-			const errorMsg = "Resolver registration failed";
+			logAuthError("registerResolver", err, {
+				email: resolverData?.email,
+				isUnexpected: true,
+			});
+			const errorMsg = getAuthErrorMessage(err, "registerResolver");
 			setError(errorMsg);
 			return { success: false, error: errorMsg };
 		} finally {

@@ -4,7 +4,10 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const ThemeContext = createContext({
 	theme: "light",
+	darkMode: false,
+	isDarkMode: false,
 	toggleTheme: () => {},
+	toggleDarkMode: () => {},
 });
 
 export function ThemeProvider({ children }) {
@@ -43,8 +46,20 @@ export function ThemeProvider({ children }) {
 		setTheme((prev) => (prev === "light" ? "dark" : "light"));
 	};
 
+	// Computed values for convenience
+	const darkMode = theme === "dark";
+	const isDarkMode = theme === "dark";
+
 	return (
-		<ThemeContext.Provider value={{ theme, toggleTheme }}>
+		<ThemeContext.Provider
+			value={{
+				theme,
+				darkMode,
+				isDarkMode,
+				toggleTheme,
+				toggleDarkMode: toggleTheme,
+			}}
+		>
 			{children}
 		</ThemeContext.Provider>
 	);

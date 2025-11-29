@@ -13,6 +13,154 @@ import { CoreService, AnalyticsService } from "../modules/core";
 import { ResolverService } from "../modules/resolver";
 import { AdminService } from "../modules/admin";
 
+// ==================== Error Handling Utilities ====================
+
+/**
+ * Context-specific error messages for better UX
+ */
+const CONTEXT_ERROR_MESSAGES = {
+	issues: {
+		fetch: "Unable to load issues. Please refresh the page or try again later.",
+		fetchSingle:
+			"Unable to load this issue. It may have been removed or you don't have access.",
+		create: "Failed to submit your report. Please check your input and try again.",
+		update: "Failed to update the issue. Please try again.",
+		delete: "Failed to delete the issue. Please try again.",
+		upvote: "Unable to upvote this issue. Please try again.",
+		bookmark: "Unable to bookmark this issue. Please try again.",
+	},
+	users: {
+		fetch: "Unable to load user information. Please try again.",
+		fetchProfile: "Unable to load profile. Please refresh the page.",
+		update: "Failed to update your profile. Please check your input and try again.",
+	},
+	comments: {
+		fetch: "Unable to load comments. Please refresh the page.",
+		create: "Failed to post your comment. Please try again.",
+		delete: "Failed to delete the comment. Please try again.",
+	},
+	notifications: {
+		fetch: "Unable to load notifications. Please try again.",
+		markRead: "Failed to mark notification as read. Please try again.",
+	},
+	auth: {
+		login: "Login failed. Please check your credentials and try again.",
+		register:
+			"Registration failed. Please check your information and try again.",
+		logout: "Logout failed. Please try again.",
+		fetchUser:
+			"Unable to load your account information. Please refresh the page.",
+	},
+	categories: {
+		fetch: "Unable to load categories. Some features may be limited.",
+	},
+	areas: {
+		fetch: "Unable to load areas. Some features may be limited.",
+	},
+	resolver: {
+		fetch: "Unable to load resolver data. Please try again.",
+		updateStatus: "Failed to update issue status. Please try again.",
+	},
+	admin: {
+		fetch: "Unable to load admin data. Please try again.",
+		fetchUsers: "Unable to load user list. Please try again.",
+	},
+	analytics: {
+		fetch: "Unable to load analytics data. Please try again.",
+	},
+	generic: {
+		fetch: "Unable to load data. Please try again.",
+		submit: "Failed to submit. Please try again.",
+		network: "Network error. Please check your connection and try again.",
+		unknown: "An unexpected error occurred. Please try again.",
+	},
+};
+
+/**
+ * Helper function to extract and format error message from various formats
+ * @param {any} error - Error from API response
+ * @param {string} context - Context key for specific error message
+ * @param {string} action - Action key for specific error message
+ * @returns {string}
+ */
+function getErrorMessage(error, context = "generic", action = "fetch") {
+	// Get context-specific default message
+	const contextMessages =
+		CONTEXT_ERROR_MESSAGES[context] || CONTEXT_ERROR_MESSAGES.generic;
+	const defaultMessage =
+		contextMessages[action] ||
+		contextMessages.fetch ||
+		CONTEXT_ERROR_MESSAGES.generic.unknown;
+
+	if (!error) return defaultMessage;
+
+	// If it's a string, check if it's a useful message
+	if (typeof error === "string") {
+		// If it's a generic/unhelpful message, use our context-specific one
+		const genericMessages = [
+			"An error occurred",
+			"Request failed",
+			"Error",
+			"Unknown error",
+		];
+		if (
+			genericMessages.some((msg) =>
+				error.toLowerCase().includes(msg.toLowerCase())
+			)
+		) {
+			return defaultMessage;
+		}
+		return error;
+	}
+
+	// Try to extract field-specific errors for validation
+	if (error.fieldErrors && typeof error.fieldErrors === "object") {
+		const fieldNames = Object.keys(error.fieldErrors);
+		if (fieldNames.length > 0) {
+			const firstField = fieldNames[0];
+			const fieldError = Array.isArray(error.fieldErrors[firstField])
+				? error.fieldErrors[firstField][0]
+				: error.fieldErrors[firstField];
+			return `${formatFieldName(firstField)}: ${fieldError}`;
+		}
+	}
+
+	// Try various error message formats
+	if (error.message && typeof error.message === "string")
+		return error.message;
+	if (error.detail && typeof error.detail === "string") return error.detail;
+	if (error.error) return getErrorMessage(error.error, context, action);
+
+	return defaultMessage;
+}
+
+/**
+ * Format field name for display (snake_case to Title Case)
+ */
+function formatFieldName(fieldName) {
+	return fieldName
+		.replace(/_/g, " ")
+		.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Log error details for developers
+ */
+function logHookError(hookName, action, error, additionalInfo = {}) {
+	const timestamp = new Date().toISOString();
+	console.group(`🔴 Hook Error [${timestamp}] - ${hookName}`);
+	console.error("Action:", action);
+	console.error("Error:", error);
+	if (error?.errorCode) console.error("Error Code:", error.errorCode);
+	if (error?.developerMessage)
+		console.error("Dev Message:", error.developerMessage);
+	if (error?.statusCode) console.error("Status Code:", error.statusCode);
+	if (Object.keys(additionalInfo).length > 0) {
+		console.error("Additional Info:", additionalInfo);
+	}
+	console.groupEnd();
+}
+
 // ==================== Generic Fetch Hook ====================
 
 /**
@@ -23,7 +171,13 @@ import { AdminService } from "../modules/admin";
  * @returns {Object} { data, loading, error, refetch }
  */
 export function useAsyncData(fetchFn, deps = [], options = {}) {
-	const { immediate = true, initialData = null } = options;
+	const {
+		immediate = true,
+		initialData = null,
+		context = "generic",
+		action = "fetch",
+		hookName = "useAsyncData",
+	} = options;
 
 	const [data, setData] = useState(initialData);
 	const [loading, setLoading] = useState(immediate);
@@ -41,17 +195,31 @@ export function useAsyncData(fetchFn, deps = [], options = {}) {
 					setData(response.data);
 					return { success: true, data: response.data };
 				}
-				setError(response.error || "An error occurred");
-				return { success: false, error: response.error };
+
+				// Log detailed error for developers
+				logHookError(hookName, action, response, { args });
+
+				const errorMsg =
+					response.errorMessage ||
+					getErrorMessage(response.error, context, action);
+				setError(errorMsg);
+				return { success: false, error: errorMsg };
 			} catch (err) {
-				const errorMsg = err.message || "An unexpected error occurred";
+				// Log unexpected error for developers
+				logHookError(hookName, action, err, {
+					args,
+					isUnexpected: true,
+					stack: err.stack,
+				});
+
+				const errorMsg = getErrorMessage(err, context, action);
 				setError(errorMsg);
 				return { success: false, error: errorMsg };
 			} finally {
 				setLoading(false);
 			}
 		},
-		[fetchFn]
+		[fetchFn, context, action, hookName]
 	);
 
 	useEffect(() => {
@@ -93,10 +261,19 @@ export function useIssues(initialParams = {}) {
 						currentPage: newParams.page || 1,
 					});
 				} else {
-					setError(response.error);
+					logHookError("useIssues", "fetch", response, {
+						params: newParams,
+					});
+					setError(
+						getErrorMessage(response.error, "issues", "fetch")
+					);
 				}
 			} catch (err) {
-				setError(err.message);
+				logHookError("useIssues", "fetch", err, {
+					params: newParams,
+					isUnexpected: true,
+				});
+				setError(getErrorMessage(err, "issues", "fetch"));
 			} finally {
 				setLoading(false);
 			}
@@ -149,10 +326,17 @@ export function useIssue(issueId) {
 			if (response.success) {
 				setIssue(response.data);
 			} else {
-				setError(response.error);
+				logHookError("useIssue", "fetchSingle", response, { issueId });
+				setError(
+					getErrorMessage(response.error, "issues", "fetchSingle")
+				);
 			}
 		} catch (err) {
-			setError(err.message);
+			logHookError("useIssue", "fetchSingle", err, {
+				issueId,
+				isUnexpected: true,
+			});
+			setError(getErrorMessage(err, "issues", "fetchSingle"));
 		} finally {
 			setLoading(false);
 		}
@@ -171,6 +355,9 @@ export function useIssue(issueId) {
 export function useTrendingIssues() {
 	return useAsyncData(() => IssueService.getTrending(), [], {
 		initialData: [],
+		context: "issues",
+		action: "fetch",
+		hookName: "useTrendingIssues",
 	});
 }
 
@@ -184,7 +371,18 @@ export function useIssueMutations() {
 		setLoading(true);
 		try {
 			const response = await IssueService.upvote(issueId);
+			if (!response.success) {
+				logHookError("useIssueMutations", "upvote", response, {
+					issueId,
+				});
+			}
 			return response;
+		} catch (err) {
+			logHookError("useIssueMutations", "upvote", err, {
+				issueId,
+				isUnexpected: true,
+			});
+			throw err;
 		} finally {
 			setLoading(false);
 		}
@@ -194,7 +392,18 @@ export function useIssueMutations() {
 		setLoading(true);
 		try {
 			const response = await IssueService.removeUpvote(issueId);
+			if (!response.success) {
+				logHookError("useIssueMutations", "removeUpvote", response, {
+					issueId,
+				});
+			}
 			return response;
+		} catch (err) {
+			logHookError("useIssueMutations", "removeUpvote", err, {
+				issueId,
+				isUnexpected: true,
+			});
+			throw err;
 		} finally {
 			setLoading(false);
 		}
@@ -204,7 +413,18 @@ export function useIssueMutations() {
 		setLoading(true);
 		try {
 			const response = await IssueService.bookmark(issueId);
+			if (!response.success) {
+				logHookError("useIssueMutations", "bookmark", response, {
+					issueId,
+				});
+			}
 			return response;
+		} catch (err) {
+			logHookError("useIssueMutations", "bookmark", err, {
+				issueId,
+				isUnexpected: true,
+			});
+			throw err;
 		} finally {
 			setLoading(false);
 		}
@@ -214,7 +434,18 @@ export function useIssueMutations() {
 		setLoading(true);
 		try {
 			const response = await IssueService.removeBookmark(issueId);
+			if (!response.success) {
+				logHookError("useIssueMutations", "removeBookmark", response, {
+					issueId,
+				});
+			}
 			return response;
+		} catch (err) {
+			logHookError("useIssueMutations", "removeBookmark", err, {
+				issueId,
+				isUnexpected: true,
+			});
+			throw err;
 		} finally {
 			setLoading(false);
 		}
@@ -240,10 +471,19 @@ export function useMyIssues(params = {}) {
 			if (response.success) {
 				setIssues(response.data.results || response.data);
 			} else {
-				setError(response.error);
+				logHookError("useMyIssues", "fetchMyIssues", response, {
+					params,
+				});
+				setError(
+					getErrorMessage(response.error, "users", "fetchProfile")
+				);
 			}
 		} catch (err) {
-			setError(err.message);
+			logHookError("useMyIssues", "fetchMyIssues", err, {
+				params,
+				isUnexpected: true,
+			});
+			setError(getErrorMessage(err, "users", "fetchProfile"));
 		} finally {
 			setLoading(false);
 		}
@@ -262,6 +502,9 @@ export function useMyIssues(params = {}) {
 export function useMyBookmarks() {
 	return useAsyncData(() => UserService.getMyBookmarks(), [], {
 		initialData: [],
+		context: "users",
+		action: "fetchProfile",
+		hookName: "useMyBookmarks",
 	});
 }
 
@@ -277,15 +520,33 @@ export function useUserSettings() {
 		setData,
 	} = useAsyncData(() => UserService.getSettings(), [], {
 		initialData: null,
+		context: "users",
+		action: "fetchProfile",
+		hookName: "useUserSettings",
 	});
 
 	const updateSettings = useCallback(
 		async (newSettings) => {
-			const response = await UserService.updateSettings(newSettings);
-			if (response.success) {
-				setData((prev) => ({ ...prev, ...newSettings }));
+			try {
+				const response = await UserService.updateSettings(newSettings);
+				if (response.success) {
+					setData((prev) => ({ ...prev, ...newSettings }));
+				} else {
+					logHookError(
+						"useUserSettings",
+						"updateSettings",
+						response,
+						{ newSettings }
+					);
+				}
+				return response;
+			} catch (err) {
+				logHookError("useUserSettings", "updateSettings", err, {
+					newSettings,
+					isUnexpected: true,
+				});
+				throw err;
 			}
-			return response;
 		},
 		[setData]
 	);
@@ -313,10 +574,17 @@ export function useComments(issueId) {
 			if (response.success) {
 				setComments(response.data.results || response.data);
 			} else {
-				setError(response.error);
+				logHookError("useComments", "fetchComments", response, {
+					issueId,
+				});
+				setError(getErrorMessage(response.error, "comments", "fetch"));
 			}
 		} catch (err) {
-			setError(err.message);
+			logHookError("useComments", "fetchComments", err, {
+				issueId,
+				isUnexpected: true,
+			});
+			setError(getErrorMessage(err, "comments", "fetch"));
 		} finally {
 			setLoading(false);
 		}
@@ -328,26 +596,52 @@ export function useComments(issueId) {
 
 	const addComment = useCallback(
 		async (content, parentId = null) => {
-			const response = await CommentService.createComment(
-				issueId,
-				content,
-				parentId
-			);
-			if (response.success) {
-				await fetchComments(); // Refresh comments
+			try {
+				const response = await CommentService.createComment(
+					issueId,
+					content,
+					parentId
+				);
+				if (response.success) {
+					await fetchComments(); // Refresh comments
+				} else {
+					logHookError("useComments", "addComment", response, {
+						issueId,
+						parentId,
+					});
+				}
+				return response;
+			} catch (err) {
+				logHookError("useComments", "addComment", err, {
+					issueId,
+					parentId,
+					isUnexpected: true,
+				});
+				throw err;
 			}
-			return response;
 		},
 		[issueId, fetchComments]
 	);
 
 	const deleteComment = useCallback(
 		async (commentId) => {
-			const response = await CommentService.deleteComment(commentId);
-			if (response.success) {
-				await fetchComments(); // Refresh comments
+			try {
+				const response = await CommentService.deleteComment(commentId);
+				if (response.success) {
+					await fetchComments(); // Refresh comments
+				} else {
+					logHookError("useComments", "deleteComment", response, {
+						commentId,
+					});
+				}
+				return response;
+			} catch (err) {
+				logHookError("useComments", "deleteComment", err, {
+					commentId,
+					isUnexpected: true,
+				});
+				throw err;
 			}
-			return response;
 		},
 		[fetchComments]
 	);
@@ -385,6 +679,20 @@ export function useNotifications() {
 				setNotifications(
 					notifResponse.data.results || notifResponse.data
 				);
+			} else {
+				logHookError(
+					"useNotifications",
+					"fetchNotifications",
+					notifResponse,
+					{}
+				);
+				setError(
+					getErrorMessage(
+						notifResponse.error,
+						"notifications",
+						"fetch"
+					)
+				);
 			}
 			if (countResponse.success) {
 				setUnreadCount(
@@ -394,7 +702,10 @@ export function useNotifications() {
 				);
 			}
 		} catch (err) {
-			setError(err.message);
+			logHookError("useNotifications", "fetchNotifications", err, {
+				isUnexpected: true,
+			});
+			setError(getErrorMessage(err, "notifications", "fetch"));
 		} finally {
 			setLoading(false);
 		}
@@ -405,27 +716,49 @@ export function useNotifications() {
 	}, [fetchNotifications]);
 
 	const markAsRead = useCallback(async (notificationId) => {
-		const response = await NotificationService.markAsRead(notificationId);
-		if (response.success) {
-			setNotifications((prev) =>
-				prev.map((n) =>
-					n.id === notificationId ? { ...n, is_read: true } : n
-				)
-			);
-			setUnreadCount((prev) => Math.max(0, prev - 1));
+		try {
+			const response =
+				await NotificationService.markAsRead(notificationId);
+			if (response.success) {
+				setNotifications((prev) =>
+					prev.map((n) =>
+						n.id === notificationId ? { ...n, is_read: true } : n
+					)
+				);
+				setUnreadCount((prev) => Math.max(0, prev - 1));
+			} else {
+				logHookError("useNotifications", "markAsRead", response, {
+					notificationId,
+				});
+			}
+			return response;
+		} catch (err) {
+			logHookError("useNotifications", "markAsRead", err, {
+				notificationId,
+				isUnexpected: true,
+			});
+			throw err;
 		}
-		return response;
 	}, []);
 
 	const markAllAsRead = useCallback(async () => {
-		const response = await NotificationService.markAllAsRead();
-		if (response.success) {
-			setNotifications((prev) =>
-				prev.map((n) => ({ ...n, is_read: true }))
-			);
-			setUnreadCount(0);
+		try {
+			const response = await NotificationService.markAllAsRead();
+			if (response.success) {
+				setNotifications((prev) =>
+					prev.map((n) => ({ ...n, is_read: true }))
+				);
+				setUnreadCount(0);
+			} else {
+				logHookError("useNotifications", "markAllAsRead", response, {});
+			}
+			return response;
+		} catch (err) {
+			logHookError("useNotifications", "markAllAsRead", err, {
+				isUnexpected: true,
+			});
+			throw err;
 		}
-		return response;
 	}, []);
 
 	return {
@@ -447,6 +780,9 @@ export function useNotifications() {
 export function useCategories() {
 	return useAsyncData(() => CoreService.getCategories(), [], {
 		initialData: [],
+		context: "core",
+		action: "fetch",
+		hookName: "useCategories",
 	});
 }
 
@@ -456,6 +792,9 @@ export function useCategories() {
 export function useAreas() {
 	return useAsyncData(() => CoreService.getAreas(), [], {
 		initialData: [],
+		context: "core",
+		action: "fetch",
+		hookName: "useAreas",
 	});
 }
 
@@ -465,6 +804,9 @@ export function useAreas() {
 export function usePlatformStats() {
 	return useAsyncData(() => CoreService.getPlatformStats(), [], {
 		initialData: null,
+		context: "core",
+		action: "fetch",
+		hookName: "usePlatformStats",
 	});
 }
 
@@ -476,6 +818,9 @@ export function usePlatformStats() {
 export function useResolverDashboard() {
 	return useAsyncData(() => ResolverService.getDashboard(), [], {
 		initialData: null,
+		context: "resolver",
+		action: "fetch",
+		hookName: "useResolverDashboard",
 	});
 }
 
@@ -494,10 +839,20 @@ export function useAssignedIssues(params = {}) {
 			if (response.success) {
 				setIssues(response.data.results || response.data);
 			} else {
-				setError(response.error);
+				logHookError(
+					"useAssignedIssues",
+					"fetchAssignedIssues",
+					response,
+					{ params }
+				);
+				setError(getErrorMessage(response.error, "resolver", "fetch"));
 			}
 		} catch (err) {
-			setError(err.message);
+			logHookError("useAssignedIssues", "fetchAssignedIssues", err, {
+				params,
+				isUnexpected: true,
+			});
+			setError(getErrorMessage(err, "resolver", "fetch"));
 		} finally {
 			setLoading(false);
 		}
@@ -518,6 +873,9 @@ export function useAssignedIssues(params = {}) {
 export function useAdminDashboard() {
 	return useAsyncData(() => AdminService.getDashboard(), [], {
 		initialData: null,
+		context: "admin",
+		action: "fetch",
+		hookName: "useAdminDashboard",
 	});
 }
 
@@ -543,10 +901,17 @@ export function useUsers(params = {}) {
 						previous: response.data.previous,
 					});
 				} else {
-					setError(response.error);
+					logHookError("useUsers", "fetchUsers", response, {
+						newParams,
+					});
+					setError(getErrorMessage(response.error, "admin", "fetch"));
 				}
 			} catch (err) {
-				setError(err.message);
+				logHookError("useUsers", "fetchUsers", err, {
+					newParams,
+					isUnexpected: true,
+				});
+				setError(getErrorMessage(err, "admin", "fetch"));
 			} finally {
 				setLoading(false);
 			}
@@ -567,6 +932,9 @@ export function useUsers(params = {}) {
 export function usePendingResolvers() {
 	return useAsyncData(() => AdminService.getPendingResolvers(), [], {
 		initialData: [],
+		context: "admin",
+		action: "fetch",
+		hookName: "usePendingResolvers",
 	});
 }
 
@@ -591,6 +959,22 @@ export function useAnalytics(period = "month") {
 					AnalyticsService.getTrends({ period }),
 				]);
 
+			// Check for errors in any of the responses
+			const errors = [];
+			if (!overview.success) errors.push("overview");
+			if (!categoryStats.success) errors.push("category stats");
+			if (!areaStats.success) errors.push("area stats");
+			if (!trends.success) errors.push("trends");
+
+			if (errors.length > 0) {
+				logHookError(
+					"useAnalytics",
+					"fetchAnalytics",
+					{ errors, overview, categoryStats, areaStats, trends },
+					{ period }
+				);
+			}
+
 			setData({
 				overview: overview.success ? overview.data : null,
 				categoryStats: categoryStats.success
@@ -600,7 +984,11 @@ export function useAnalytics(period = "month") {
 				trends: trends.success ? trends.data : null,
 			});
 		} catch (err) {
-			setError(err.message);
+			logHookError("useAnalytics", "fetchAnalytics", err, {
+				period,
+				isUnexpected: true,
+			});
+			setError(getErrorMessage(err, "admin", "fetch"));
 		} finally {
 			setLoading(false);
 		}

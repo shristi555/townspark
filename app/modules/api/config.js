@@ -38,6 +38,7 @@ export const API_ROUTES = {
 	issues: {
 		list: "/issues/",
 		create: "/issues/",
+		byId: (id) => `/issues/${id}/`,
 		detail: (id) => `/issues/${id}/`,
 		update: (id) => `/issues/${id}/`,
 		delete: (id) => `/issues/${id}/`,
@@ -52,24 +53,32 @@ export const API_ROUTES = {
 	// Comments
 	comments: {
 		list: (issueId) => `/issues/${issueId}/comments/`,
-		create: (issueId) => `/issues/${issueId}/comments/`,
+		byIssue: (issueId) => `/issues/${issueId}/comments/`,
+		create: "/comments/",
+		byId: (commentId) => `/comments/${commentId}/`,
 		delete: (issueId, commentId) =>
 			`/issues/${issueId}/comments/${commentId}/`,
 		like: (commentId) => `/comments/${commentId}/like/`,
+		replies: (commentId) => `/comments/${commentId}/replies/`,
 	},
 
 	// Notifications
 	notifications: {
 		list: "/notifications/",
+		byId: (id) => `/notifications/${id}/`,
 		markRead: (id) => `/notifications/${id}/read/`,
 		markAllRead: "/notifications/read-all/",
 		delete: (id) => `/notifications/${id}/`,
+		unreadCount: "/notifications/unread-count/",
+		clearAll: "/notifications/clear-all/",
 	},
 
 	// Core/Reference Data
 	core: {
 		categories: "/categories/",
 		departments: "/departments/",
+		areas: "/areas/",
+		wards: "/wards/",
 		statusOptions: "/status-options/",
 		urgencyLevels: "/urgency-levels/",
 		platformStats: "/platform/stats/",
@@ -79,23 +88,37 @@ export const API_ROUTES = {
 	resolver: {
 		dashboard: "/resolver/dashboard/",
 		assigned: "/resolver/assigned/",
+		assignedIssues: "/resolver/issues/assigned/",
 		pending: "/resolver/pending/",
 		accept: (id) => `/resolver/issues/${id}/accept/`,
 		complete: (id) => `/resolver/issues/${id}/complete/`,
+		claimIssue: (id) => `/resolver/issues/${id}/claim/`,
+		updateStatus: (id) => `/resolver/issues/${id}/status/`,
+		addTimeline: (id) => `/resolver/issues/${id}/timeline/`,
+		addOfficialResponse: (id) =>
+			`/resolver/issues/${id}/official-response/`,
 	},
 
 	// Admin
 	admin: {
 		dashboard: "/admin/dashboard/",
-		users: "/admin/users/",
-		userDetail: (id) => `/admin/users/${id}/`,
-		toggleUserStatus: (id) => `/admin/users/${id}/toggle-status/`,
-		deleteUser: (id) => `/admin/users/${id}/`,
-		resolvers: "/admin/resolvers/",
-		resolversPending: "/admin/resolvers/pending/",
-		verifyResolver: (id) => `/admin/resolvers/${id}/verify/`,
-		rejectResolver: (id) => `/admin/resolvers/${id}/reject/`,
-		deleteResolver: (id) => `/admin/resolvers/${id}/`,
+		users: {
+			list: "/admin/users/",
+			byId: (id) => `/admin/users/${id}/`,
+			ban: (id) => `/admin/users/${id}/ban/`,
+			unban: (id) => `/admin/users/${id}/unban/`,
+		},
+		resolvers: {
+			list: "/admin/resolvers/",
+			pending: "/admin/resolvers/pending/",
+			byId: (id) => `/admin/resolvers/${id}/`,
+			verify: (id) => `/admin/resolvers/${id}/verify/`,
+			reject: (id) => `/admin/resolvers/${id}/reject/`,
+		},
+		issues: {
+			list: "/admin/issues/",
+			byId: (id) => `/admin/issues/${id}/`,
+		},
 	},
 
 	// Analytics
@@ -104,6 +127,9 @@ export const API_ROUTES = {
 		issues: "/analytics/issues/",
 		users: "/analytics/users/",
 		resolvers: "/analytics/resolvers/",
+		byCategory: "/analytics/by-category/",
+		byArea: "/analytics/by-area/",
+		trends: "/analytics/trends/",
 	},
 };
 

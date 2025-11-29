@@ -48,7 +48,15 @@ export default function ExplorePage() {
 						previous: response.data.previous,
 					});
 				} else {
-					setError(response.error);
+					// Extract error message safely
+					const errorMsg =
+						response.errorMessage ||
+						(typeof response.error === "string"
+							? response.error
+							: response.error?.message ||
+								response.error?.detail ||
+								"Failed to load issues");
+					setError(errorMsg);
 				}
 			} catch (err) {
 				setError(err.message);

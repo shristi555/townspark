@@ -15,6 +15,107 @@ import { useAuth } from "../contexts/auth_context";
 import { useCategories, useAreas } from "../hooks";
 import { IssueService } from "../modules/issues";
 
+/**
+ * User-friendly error messages for issue reporting
+ */
+const REPORT_ERROR_MESSAGES = {
+	validation: "Please check the form for errors and try again.",
+	network:
+		"Unable to connect to the server. Please check your internet connection.",
+	file_too_large:
+		"One or more images are too large. Please use smaller images (max 5MB each).",
+	invalid_format: "Invalid image format. Please use JPG, PNG, or GIF files.",
+	server_error:
+		"Our servers are experiencing issues. Please try again later.",
+	unauthorized: "Your session has expired. Please sign in again.",
+	default: "Unable to submit your report. Please try again.",
+};
+
+/**
+ * Log issue submission errors for developers
+ */
+const logSubmitError = (error, context = {}) => {
+	const timestamp = new Date().toISOString();
+
+	console.group(`📝 [ReportIssuePage] Submit Error - ${timestamp}`);
+	console.error("Error:", error);
+
+	if (error?.status) console.error("Status:", error.status);
+	if (error?.error_code) console.error("Error Code:", error.error_code);
+	if (error?.errors) console.error("Validation Errors:", error.errors);
+
+	if (Object.keys(context).length > 0) {
+		console.error("Form Data:", context);
+	}
+
+	console.groupEnd();
+};
+
+/**
+ * Extract user-friendly error message from API response
+ */
+const getSubmitErrorMessage = (error) => {
+	if (!error) return REPORT_ERROR_MESSAGES.default;
+
+	// Handle network errors
+	if (error === "Network Error" || error?.message === "Network Error") {
+		return REPORT_ERROR_MESSAGES.network;
+	}
+
+	// Handle string errors
+	if (typeof error === "string") {
+		const lowerError = error.toLowerCase();
+		if (lowerError.includes("file") && lowerError.includes("large")) {
+			return REPORT_ERROR_MESSAGES.file_too_large;
+		}
+		if (lowerError.includes("format") || lowerError.includes("type")) {
+			return REPORT_ERROR_MESSAGES.invalid_format;
+		}
+		return error;
+	}
+
+	// Handle object errors
+	if (typeof error === "object") {
+		// Check status codes
+		if (error.status === 401) return REPORT_ERROR_MESSAGES.unauthorized;
+		if (error.status >= 500) return REPORT_ERROR_MESSAGES.server_error;
+		if (error.status === 413) return REPORT_ERROR_MESSAGES.file_too_large;
+
+		// Check for user-friendly message from API
+		if (typeof error.message === "string" && error.message.length < 200) {
+			return error.message;
+		}
+		if (typeof error.detail === "string" && error.detail.length < 200) {
+			return error.detail;
+		}
+
+		// Handle validation errors
+		if (error.errors && typeof error.errors === "object") {
+			const errorMessages = [];
+			for (const [field, messages] of Object.entries(error.errors)) {
+				const fieldLabel = field
+					.replace(/_/g, " ")
+					.replace(/\b\w/g, (l) => l.toUpperCase());
+				if (Array.isArray(messages)) {
+					errorMessages.push(`${fieldLabel}: ${messages[0]}`);
+				} else if (typeof messages === "string") {
+					errorMessages.push(`${fieldLabel}: ${messages}`);
+				}
+			}
+			if (errorMessages.length > 0) {
+				return errorMessages.join(". ");
+			}
+		}
+
+		// Handle nested error
+		if (error.error) {
+			return getSubmitErrorMessage(error.error);
+		}
+	}
+
+	return REPORT_ERROR_MESSAGES.default;
+};
+
 export default function ReportIssuePage() {
 	const router = useRouter();
 	const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -119,14 +220,30 @@ export default function ReportIssuePage() {
 				// Navigate to feed with success message
 				router.push("/feed?reported=true");
 			} else {
-				setApiError(
-					response.error ||
-						"Failed to submit report. Please try again."
-				);
+				// Log detailed error for developers
+				logSubmitError(response, {
+					formData: {
+						...formData,
+						description:
+							formData.description.substring(0, 50) + "...",
+					},
+					imageCount: images.length,
+				});
+
+				// Show user-friendly error message
+				const errorMsg = getSubmitErrorMessage(response.error);
+				setApiError(errorMsg);
 			}
 		} catch (error) {
-			console.error("Submit error:", error);
-			setApiError("An unexpected error occurred. Please try again.");
+			logSubmitError(error, {
+				formData: {
+					...formData,
+					description: formData.description.substring(0, 50) + "...",
+				},
+				imageCount: images.length,
+				isUnexpected: true,
+			});
+			setApiError(getSubmitErrorMessage(error));
 		} finally {
 			setLoading(false);
 		}

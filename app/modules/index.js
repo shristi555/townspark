@@ -1,6 +1,11 @@
 /**
  * Modules Index
  * Central export point for all service modules
+ *
+ * Structure:
+ * - API Layer: Core HTTP client, config, and response handling
+ * - Services: Domain-specific business logic
+ * - Models: Data structures (within each service)
  */
 
 // API Layer
@@ -10,8 +15,19 @@ export {
 	ApiResponse,
 	TokenManager,
 } from "./api/http_client";
+export { BaseService, createService } from "./api/base_service";
 
-// Auth
+// Models
+export {
+	BaseModel,
+	UserModel,
+	IssueModel,
+	CommentModel,
+	NotificationModel,
+	PaginatedResult,
+} from "./models";
+
+// Auth Service
 export { AuthService } from "./auth";
 
 // Domain Services
