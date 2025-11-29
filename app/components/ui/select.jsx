@@ -13,10 +13,14 @@ const Select = forwardRef(
 			fullWidth = true,
 			className = "",
 			selectClassName = "",
+			loading,
+			disabled,
 			...props
 		},
 		ref
 	) => {
+		const isDisabled = disabled || loading;
+
 		return (
 			<label
 				className={`flex flex-col ${fullWidth ? "w-full" : ""} ${className}`}
@@ -29,6 +33,7 @@ const Select = forwardRef(
 				<div className='relative'>
 					<select
 						ref={ref}
+						disabled={isDisabled}
 						className={`
 							flex w-full min-w-0 flex-1 appearance-none rounded-lg
 							text-text-primary-light dark:text-text-primary-dark
@@ -38,12 +43,13 @@ const Select = forwardRef(
 							h-14 p-4 pr-10 text-base font-normal leading-normal
 							cursor-pointer
 							${error ? "border-status-reported focus:ring-status-reported/50" : ""}
+							${isDisabled ? "opacity-50 cursor-not-allowed" : ""}
 							${selectClassName}
 						`}
 						{...props}
 					>
 						<option value='' disabled>
-							{placeholder}
+							{loading ? "Loading..." : placeholder}
 						</option>
 						{options.map((option) => (
 							<option

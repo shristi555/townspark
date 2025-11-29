@@ -1,7 +1,7 @@
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export default apiRoutes = {
-	baseUrl: baseUrl,
+const apiRoutes = {
+	baseURL: baseUrl,
 	auth: {
 		login: `${baseUrl}/auth/jwt/create/`,
 		signup: `${baseUrl}/auth/users/`,
@@ -9,3 +9,5 @@ export default apiRoutes = {
 		me: `${baseUrl}/auth/users/me/`,
 	},
 };
+
+export default apiRoutes;

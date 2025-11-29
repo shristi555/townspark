@@ -133,29 +133,55 @@ export default function ReportIssuePage() {
 	};
 
 	const handleGetLocation = () => {
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(
-				(position) => {
-					setCoords({
-						latitude: position.coords.latitude,
-						longitude: position.coords.longitude,
-					});
-					// In real app, we'd reverse geocode this
-					setFormData((prev) => ({
-						...prev,
-						location: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
-					}));
-				},
-				(error) => {
-					console.error("Error getting location:", error);
-					setApiError(
-						"Unable to get your location. Please enter it manually."
-					);
-				}
-			);
-		} else {
+		if (!navigator.geolocation) {
 			setApiError("Geolocation is not supported by your browser.");
+			return;
 		}
+
+		// Show loading state while getting location
+		setApiError("");
+
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				setCoords({
+					latitude: position.coords.latitude,
+					longitude: position.coords.longitude,
+				});
+				// In real app, we'd reverse geocode this
+				setFormData((prev) => ({
+					...prev,
+					location: `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`,
+				}));
+			},
+			(error) => {
+				// Handle specific geolocation errors
+				let errorMessage =
+					"Unable to get your location. Please enter it manually.";
+
+				switch (error.code) {
+					case error.PERMISSION_DENIED:
+						errorMessage =
+							"Location permission denied. Please allow location access in your browser settings.";
+						break;
+					case error.POSITION_UNAVAILABLE:
+						errorMessage =
+							"Location information is unavailable. Please enter it manually.";
+						break;
+					case error.TIMEOUT:
+						errorMessage =
+							"Location request timed out. Please try again.";
+						break;
+				}
+
+				console.error("Geolocation error:", error.code, error.message);
+				setApiError(errorMessage);
+			},
+			{
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 0,
+			}
+		);
 	};
 
 	return (

@@ -62,7 +62,7 @@ class SignupModel {
 export class AuthService extends ApiService {
 	async login(email, password) {
 		const res = await super.sendPostRequest(
-			`${this.baseURL}/auth/jwt/create/`,
+			`${ApiService.baseURL}/auth/jwt/create/`,
 			{
 				data: { email, password },
 			}
@@ -76,7 +76,7 @@ export class AuthService extends ApiService {
 	}
 
 	async signup(data) {
-		const res = await fetch(`${this.baseURL}/auth/users/`, {
+		const res = await fetch(`${ApiService.baseURL}/auth/users/`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(data),
@@ -88,7 +88,7 @@ export class AuthService extends ApiService {
 	}
 
 	async refreshToken(refresh) {
-		const res = await fetch(`${this.baseURL}/auth/jwt/refresh/`, {
+		const res = await fetch(`${ApiService.baseURL}/auth/jwt/refresh/`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ refresh }),
@@ -100,7 +100,7 @@ export class AuthService extends ApiService {
 	}
 
 	async getUserInfo(accessToken) {
-		const res = await fetch(`${this.baseURL}/auth/users/me/`, {
+		const res = await fetch(`${ApiService.baseURL}/auth/users/me/`, {
 			headers: { Authorization: `Bearer ${accessToken}` },
 		});
 

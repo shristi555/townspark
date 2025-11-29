@@ -1,8 +1,8 @@
-import { apiRoutes } from "@/app/modules/api/api_service";
+import apiRoutes from "@/app/modules/api/api_routes";
 
 /**
  * Backend Response structure
- * Mimics the Dart BackendResponse class
+ *
  */
 export class BackendResponse {
 	constructor({
