@@ -18,6 +18,25 @@ import { TokenManager } from "../modules/api/http_client";
 
 const AuthContext = createContext(null);
 
+/**
+ * Helper function to extract error message from API response
+ * @param {any} error - Error object or string
+ * @returns {string}
+ */
+const extractErrorMessage = (error) => {
+	if (!error) return "An unknown error occurred";
+	if (typeof error === "string") return error;
+	if (typeof error === "object") {
+		return (
+			error.message ||
+			error.detail ||
+			error.error ||
+			JSON.stringify(error)
+		);
+	}
+	return String(error);
+};
+
 export function AuthProvider({ children }) {
 	const [user, setUser] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -81,8 +100,9 @@ export function AuthProvider({ children }) {
 					return { success: true };
 				}
 
-				setError(response.error);
-				return { success: false, error: response.error };
+				const errorMsg = extractErrorMessage(response.error);
+				setError(errorMsg);
+				return { success: false, error: errorMsg };
 			} catch (err) {
 				const errorMsg = "An unexpected error occurred";
 				setError(errorMsg);
@@ -115,8 +135,9 @@ export function AuthProvider({ children }) {
 					return { success: true, data: response.data };
 				}
 
-				setError(response.error);
-				return { success: false, error: response.error };
+				const errorMsg = extractErrorMessage(response.error);
+				setError(errorMsg);
+				return { success: false, error: errorMsg };
 			} catch (err) {
 				const errorMsg = "Registration failed";
 				setError(errorMsg);
@@ -144,8 +165,9 @@ export function AuthProvider({ children }) {
 				return { success: true, data: response.data };
 			}
 
-			setError(response.error);
-			return { success: false, error: response.error };
+			const errorMsg = extractErrorMessage(response.error);
+			setError(errorMsg);
+			return { success: false, error: errorMsg };
 		} catch (err) {
 			const errorMsg = "Resolver registration failed";
 			setError(errorMsg);

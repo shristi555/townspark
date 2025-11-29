@@ -176,9 +176,15 @@ export default function RegisterPage() {
 					router.push("/feed");
 				}
 			} else {
-				setApiError(
-					result.error || "Registration failed. Please try again."
-				);
+				// Handle error - it could be a string or an object with message property
+				const errorMessage =
+					typeof result.error === "object"
+						? result.error?.message ||
+							result.error?.detail ||
+							"Registration failed. Please try again."
+						: result.error ||
+							"Registration failed. Please try again.";
+				setApiError(errorMessage);
 			}
 		} catch (error) {
 			setApiError("An unexpected error occurred. Please try again.");

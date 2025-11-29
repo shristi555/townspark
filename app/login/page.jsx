@@ -69,9 +69,14 @@ export default function LoginPage() {
 		const result = await login(formData.email, formData.password);
 
 		if (!result.success) {
-			setApiError(
-				result.error || "Invalid credentials. Please try again."
-			);
+			// Handle error - it could be a string or an object with message property
+			const errorMessage =
+				typeof result.error === "object"
+					? result.error?.message ||
+						result.error?.detail ||
+						"Invalid credentials. Please try again."
+					: result.error || "Invalid credentials. Please try again.";
+			setApiError(errorMessage);
 			setLoading(false);
 		}
 		// If successful, useEffect will handle redirect
