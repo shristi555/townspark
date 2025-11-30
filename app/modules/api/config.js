@@ -1,6 +1,11 @@
 /**
  * API Configuration and Routes
  * Centralized endpoint definitions for the TownSpark API
+ *
+ * Backend API Documentation:
+ * - Base URL: /api/v1/
+ * - Authentication: JWT Bearer tokens
+ * - User Levels: Admin, Staff (Resolver), Regular User (Citizen)
  */
 
 // Use relative URL to go through Next.js proxy (avoids CORS issues)
@@ -13,123 +18,62 @@ export const API_CONFIG = {
 };
 
 export const API_ROUTES = {
-	// Authentication
+	// Authentication - accounts app
 	auth: {
+		signup: "/auth/signup/",
 		login: "/auth/login/",
-		register: "/auth/users/",
-		registerResolver: "/auth/register/resolver/",
-		refreshToken: "/auth/token/refresh/",
-		resetPassword: "/auth/users/reset_password/",
-		resetPasswordConfirm: "/auth/users/reset_password_confirm/",
-		changePassword: "/auth/users/set_password/",
+		refreshToken: "/auth/jwt/refresh/",
+		verifyToken: "/auth/jwt/verify/",
+		me: "/auth/users/me/",
+		updateProfile: "/auth/users/me/",
 	},
 
-	// Users
+	// Users - for profile operations
 	users: {
-		me: "/users/me/",
-		myIssues: "/users/me/issues/",
-		myBookmarks: "/users/me/bookmarks/",
-		myUpvoted: "/users/me/upvoted/",
-		mySettings: "/users/me/settings/",
-		byId: (id) => `/users/${id}/`,
+		me: "/auth/users/me/",
+		byId: (id) => `/auth/users/${id}/`,
 	},
 
-	// Issues
+	// Issues - issue app
 	issues: {
-		list: "/issues/",
-		create: "/issues/",
-		byId: (id) => `/issues/${id}/`,
-		detail: (id) => `/issues/${id}/`,
-		update: (id) => `/issues/${id}/`,
-		delete: (id) => `/issues/${id}/`,
-		upvote: (id) => `/issues/${id}/upvote/`,
-		bookmark: (id) => `/issues/${id}/bookmark/`,
-		share: (id) => `/issues/${id}/share/`,
-		updateStatus: (id) => `/issues/${id}/status/`,
-		assign: (id) => `/issues/${id}/assign/`,
-		officialResponse: (id) => `/issues/${id}/official-response/`,
+		create: "/issues/new/",
+		list: "/issues/list/",
+		detail: (id) => `/issues/detail/${id}/`,
+		update: (id) => `/issues/update/${id}/`,
+		delete: (id) => `/issues/delete/${id}/`,
+		// Convenience aliases
+		byId: (id) => `/issues/detail/${id}/`,
 	},
 
-	// Comments
+	// Comments - comment app
 	comments: {
-		list: (issueId) => `/issues/${issueId}/comments/`,
-		byIssue: (issueId) => `/issues/${issueId}/comments/`,
-		create: "/comments/",
-		byId: (commentId) => `/comments/${commentId}/`,
-		delete: (issueId, commentId) =>
-			`/issues/${issueId}/comments/${commentId}/`,
-		like: (commentId) => `/comments/${commentId}/like/`,
-		replies: (commentId) => `/comments/${commentId}/replies/`,
+		create: "/comments/new/",
+		list: (issueId) => `/comments/list/${issueId}/`,
+		byIssue: (issueId) => `/comments/list/${issueId}/`,
+		update: (commentId) => `/comments/update/${commentId}/`,
+		delete: (commentId) => `/comments/delete/${commentId}/`,
+		mine: "/comments/mine/",
+		byUser: (userId) => `/comments/user/${userId}/`,
+		// Alias
+		byId: (commentId) => `/comments/update/${commentId}/`,
 	},
 
-	// Notifications
-	notifications: {
-		list: "/notifications/",
-		byId: (id) => `/notifications/${id}/`,
-		markRead: (id) => `/notifications/${id}/read/`,
-		markAllRead: "/notifications/read-all/",
-		delete: (id) => `/notifications/${id}/`,
-		unreadCount: "/notifications/unread-count/",
-		clearAll: "/notifications/clear-all/",
+	// Progress - progress app (Staff only)
+	progress: {
+		create: "/progress/new/",
+		list: "/progress/list/",
+		detail: (id) => `/progress/detail/${id}/`,
+		update: (id) => `/progress/update/${id}/`,
+		delete: (id) => `/progress/delete/${id}/`,
+		byIssue: (issueId) => `/progress/issue/${issueId}/`,
 	},
 
-	// Core/Reference Data
-	core: {
-		categories: "/categories/",
-		departments: "/departments/",
-		areas: "/areas/",
-		wards: "/wards/",
-		statusOptions: "/status-options/",
-		urgencyLevels: "/urgency-levels/",
-		platformStats: "/platform/stats/",
-	},
-
-	// Resolver
-	resolver: {
-		dashboard: "/resolver/dashboard/",
-		assigned: "/resolver/assigned/",
-		assignedIssues: "/resolver/issues/assigned/",
-		pending: "/resolver/pending/",
-		accept: (id) => `/resolver/issues/${id}/accept/`,
-		complete: (id) => `/resolver/issues/${id}/complete/`,
-		claimIssue: (id) => `/resolver/issues/${id}/claim/`,
-		updateStatus: (id) => `/resolver/issues/${id}/status/`,
-		addTimeline: (id) => `/resolver/issues/${id}/timeline/`,
-		addOfficialResponse: (id) =>
-			`/resolver/issues/${id}/official-response/`,
-	},
-
-	// Admin
-	admin: {
-		dashboard: "/admin/dashboard/",
-		users: {
-			list: "/admin/users/",
-			byId: (id) => `/admin/users/${id}/`,
-			ban: (id) => `/admin/users/${id}/ban/`,
-			unban: (id) => `/admin/users/${id}/unban/`,
-		},
-		resolvers: {
-			list: "/admin/resolvers/",
-			pending: "/admin/resolvers/pending/",
-			byId: (id) => `/admin/resolvers/${id}/`,
-			verify: (id) => `/admin/resolvers/${id}/verify/`,
-			reject: (id) => `/admin/resolvers/${id}/reject/`,
-		},
-		issues: {
-			list: "/admin/issues/",
-			byId: (id) => `/admin/issues/${id}/`,
-		},
-	},
-
-	// Analytics
-	analytics: {
-		overview: "/analytics/overview/",
-		issues: "/analytics/issues/",
-		users: "/analytics/users/",
-		resolvers: "/analytics/resolvers/",
-		byCategory: "/analytics/by-category/",
-		byArea: "/analytics/by-area/",
-		trends: "/analytics/trends/",
+	// Status values for issues
+	STATUS: {
+		OPEN: "open",
+		IN_PROGRESS: "in_progress",
+		RESOLVED: "resolved",
+		CLOSED: "closed",
 	},
 };
 

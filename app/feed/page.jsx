@@ -47,8 +47,8 @@ export default function FeedPage() {
 			<Sidebar
 				isOpen={sidebarOpen}
 				onClose={() => setSidebarOpen(false)}
-				showResolverNav={user?.role === "resolver"}
-				showAdminNav={user?.role === "admin"}
+				showResolverNav={user?.is_staff}
+				showAdminNav={user?.is_admin}
 			/>
 
 			{/* Main Content */}

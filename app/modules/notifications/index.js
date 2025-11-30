@@ -1,81 +1,35 @@
 /**
  * Notification Service
- * Handles all notification-related API calls
+ * DEPRECATED: These endpoints no longer exist in the new backend.
+ * Stubbed to return empty data to prevent crashes.
  */
 
-import httpClient from "../api/http_client";
-import { API_ROUTES } from "../api/config";
+import { ApiResponse } from "../api/http_client";
 
 export const NotificationService = {
-	/**
-	 * Get all notifications for current user
-	 * @param {Object} [params]
-	 * @param {number} [params.page] - Page number
-	 * @param {boolean} [params.is_read] - Filter by read status
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getNotifications(params = {}) {
-		return httpClient.get(API_ROUTES.notifications.list, {
-			auth: true,
-			params,
-		});
+	async getNotifications() {
+		return ApiResponse.success({ results: [], count: 0 });
 	},
-
-	/**
-	 * Get unread notification count
-	 * @returns {Promise<ApiResponse>}
-	 */
 	async getUnreadCount() {
-		return httpClient.get(API_ROUTES.notifications.unreadCount, {
-			auth: true,
-		});
+		return ApiResponse.success({ count: 0 });
 	},
-
-	/**
-	 * Mark a notification as read
-	 * @param {number|string} notificationId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async markAsRead(notificationId) {
-		return httpClient.post(
-			API_ROUTES.notifications.markRead(notificationId),
-			{},
-			{ auth: true }
-		);
+	async markAsRead() {
+		return ApiResponse.success({ success: true });
 	},
-
-	/**
-	 * Mark all notifications as read
-	 * @returns {Promise<ApiResponse>}
-	 */
 	async markAllAsRead() {
-		return httpClient.post(
-			API_ROUTES.notifications.markAllRead,
-			{},
-			{ auth: true }
-		);
+		return ApiResponse.success({ success: true });
 	},
-
-	/**
-	 * Delete a notification
-	 * @param {number|string} notificationId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async deleteNotification(notificationId) {
-		return httpClient.delete(
-			API_ROUTES.notifications.byId(notificationId),
-			{ auth: true }
-		);
+	async deleteNotification() {
+		return ApiResponse.success({ success: true });
 	},
-
-	/**
-	 * Clear all notifications
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async clearAll() {
-		return httpClient.delete(API_ROUTES.notifications.clearAll, {
-			auth: true,
+	async getPreferences() {
+		return ApiResponse.success({
+			email_notifications: true,
+			push_notifications: true,
 		});
+	},
+	async updatePreferences() {
+		return ApiResponse.error("Notification preferences not available");
 	},
 };
 

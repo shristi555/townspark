@@ -1,6 +1,14 @@
 /**
  * Authentication Service
  * Handles all authentication-related API calls
+ *
+ * Backend Endpoints:
+ * - POST /auth/signup/ - Register new user
+ * - POST /auth/login/ - Login and get tokens
+ * - POST /auth/jwt/refresh/ - Refresh access token
+ * - POST /auth/jwt/verify/ - Verify token validity
+ * - GET /auth/users/me/ - Get current user profile
+ * - PATCH /auth/users/me/ - Update current user profile
  */
 
 import httpClient, { TokenManager, ApiResponse } from "../api/http_client";
@@ -12,6 +20,7 @@ import { API_ROUTES } from "../api/config";
 export const AuthService = {
 	/**
 	 * Login with email and password
+	 * Response: { tokens: { access, refresh }, user: { id, email, full_name, ... } }
 	 * @param {string} email
 	 * @param {string} password
 	 * @returns {Promise<ApiResponse>}
@@ -27,58 +36,44 @@ export const AuthService = {
 			if (tokens) {
 				TokenManager.setTokens(tokens.access, tokens.refresh);
 			}
+			if (user) {
+				TokenManager.storeUserData(user);
+			}
 		}
 
 		return response;
 	},
 
 	/**
-	 * Register a new citizen
+	 * Register a new user
+	 * Request: { email, password, full_name?, phone_number?, address?, profile_image? }
+	 * Response: { id, email, full_name, phone_number, address, profile_image }
 	 * @param {Object} userData
 	 * @returns {Promise<ApiResponse>}
 	 */
 	async register(userData) {
-		const response = await httpClient.post(API_ROUTES.auth.register, {
+		const payload = {
 			email: userData.email,
 			password: userData.password,
-			full_name: userData.full_name,
-			phone_number: userData.phone_number,
-			address: userData.address,
-		});
+		};
 
-		return response;
-	},
+		// Add optional fields if provided
+		if (userData.full_name) payload.full_name = userData.full_name;
+		if (userData.phone_number) payload.phone_number = userData.phone_number;
+		if (userData.address) payload.address = userData.address;
 
-	/**
-	 * Register as a resolver
-	 * @param {Object} resolverData
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async registerResolver(resolverData) {
-		const fileData = {};
-		if (resolverData.idDocument) {
-			fileData.id_document = resolverData.idDocument;
-		}
+		// Handle profile image if provided
+		const files = userData.profile_image
+			? { profile_image: userData.profile_image }
+			: null;
 
-		const response = await httpClient.post(
-			API_ROUTES.auth.registerResolver,
-			{
-				full_name: resolverData.full_name,
-				email: resolverData.email,
-				phone_number: resolverData.phone_number,
-				password: resolverData.password,
-				department: resolverData.department,
-				employee_id: resolverData.employee_id,
-				designation: resolverData.designation,
-			},
-			{ files: fileData }
-		);
-
-		return response;
+		return httpClient.post(API_ROUTES.auth.signup, payload, { files });
 	},
 
 	/**
 	 * Refresh access token
+	 * Request: { refresh: "token" }
+	 * Response: { access: "new_token", refresh: "new_refresh_token" }
 	 * @returns {Promise<ApiResponse>}
 	 */
 	async refreshToken() {
@@ -95,61 +90,41 @@ export const AuthService = {
 			refresh: refreshToken,
 		});
 
-		if (response.success && response.data?.access) {
-			TokenManager.setTokens(response.data.access);
+		if (response.success && response.data) {
+			// Update both tokens (backend rotates refresh tokens)
+			TokenManager.setTokens(response.data.access, response.data.refresh);
 		}
 
 		return response;
 	},
 
 	/**
-	 * Logout - clear tokens
-	 */
-	logout() {
-		TokenManager.clearTokens();
-	},
-
-	/**
-	 * Request password reset
-	 * @param {string} email
+	 * Verify token validity
+	 * Request: { token: "access_token" }
+	 * Response: {} (empty on success)
+	 * @param {string} token - Token to verify (optional, uses stored token if not provided)
 	 * @returns {Promise<ApiResponse>}
 	 */
-	async requestPasswordReset(email) {
-		return httpClient.post(API_ROUTES.auth.resetPassword, { email });
-	},
+	async verifyToken(token = null) {
+		const tokenToVerify = token || TokenManager.getAccessToken();
+		if (!tokenToVerify) {
+			return ApiResponse.failure(
+				{ code: "NO_TOKEN", message: "No token to verify" },
+				"No token available",
+				401
+			);
+		}
 
-	/**
-	 * Confirm password reset
-	 * @param {string} uid
-	 * @param {string} token
-	 * @param {string} newPassword
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async confirmPasswordReset(uid, token, newPassword) {
-		return httpClient.post(API_ROUTES.auth.resetPasswordConfirm, {
-			uid,
-			token,
-			new_password: newPassword,
-			re_new_password: newPassword,
+		return httpClient.post(API_ROUTES.auth.verifyToken, {
+			token: tokenToVerify,
 		});
 	},
 
 	/**
-	 * Change password (authenticated)
-	 * @param {string} currentPassword
-	 * @param {string} newPassword
-	 * @returns {Promise<ApiResponse>}
+	 * Logout - clear tokens and user data
 	 */
-	async changePassword(currentPassword, newPassword) {
-		return httpClient.post(
-			API_ROUTES.auth.changePassword,
-			{
-				current_password: currentPassword,
-				new_password: newPassword,
-				re_new_password: newPassword,
-			},
-			{ auth: true }
-		);
+	logout() {
+		TokenManager.clearTokens();
 	},
 
 	/**

@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
 				router.push("/login");
 				return;
 			}
-			if (authUser && authUser.role !== "admin") {
+			if (authUser && !authUser.is_admin) {
 				router.push("/feed");
 				return;
 			}
@@ -51,7 +51,7 @@ export default function AdminUsersPage() {
 
 	// Fetch users data
 	const fetchUsers = useCallback(async () => {
-		if (!authUser || authUser.role !== "admin") return;
+		if (!authUser || !authUser.is_admin) return;
 
 		setLoading(true);
 		try {
@@ -67,12 +67,12 @@ export default function AdminUsersPage() {
 	}, [authUser]);
 
 	useEffect(() => {
-		if (authUser?.role === "admin") {
+		if (authUser?.is_admin) {
 			fetchUsers();
 		}
 	}, [authUser, fetchUsers]);
 
-	const citizens = users.filter((u) => u.role === "citizen" || !u.role);
+	const citizens = users.filter((u) => !u.is_admin && !u.is_staff);
 	const activeUsers = users.filter((u) => u.is_active !== false);
 
 	const userStats = stats

@@ -1,106 +1,50 @@
 /**
  * Resolver Service
- * Handles all resolver-related API calls
+ * DEPRECATED: These endpoints no longer exist in the new backend.
+ * Resolver functionality now uses IssueService with is_staff user flag.
+ * Stubbed to return empty data to prevent crashes.
  */
 
-import httpClient from "../api/http_client";
-import { API_ROUTES } from "../api/config";
+import { ApiResponse } from "../api/http_client";
 
 export const ResolverService = {
-	/**
-	 * Get resolver dashboard data
-	 * @returns {Promise<ApiResponse>}
-	 */
 	async getDashboard() {
-		return httpClient.get(API_ROUTES.resolver.dashboard, { auth: true });
-	},
-
-	/**
-	 * Get issues assigned to resolver
-	 * @param {Object} [params]
-	 * @param {string} [params.status] - Filter by status
-	 * @param {number} [params.page] - Page number
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getAssignedIssues(params = {}) {
-		return httpClient.get(API_ROUTES.resolver.assignedIssues, {
-			auth: true,
-			params,
+		return ApiResponse.success({
+			assigned_issues: 0,
+			resolved_issues: 0,
+			pending_issues: 0,
 		});
 	},
-
-	/**
-	 * Claim an issue for resolution
-	 * @param {number|string} issueId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async claimIssue(issueId) {
-		return httpClient.post(
-			API_ROUTES.resolver.claimIssue(issueId),
-			{},
-			{ auth: true }
-		);
+	async getAssignedIssues() {
+		return ApiResponse.success({ results: [], count: 0 });
 	},
-
-	/**
-	 * Update issue status (resolver action)
-	 * @param {number|string} issueId
-	 * @param {Object} data
-	 * @param {string} data.status - New status
-	 * @param {string} [data.resolution_notes] - Notes about resolution
-	 * @param {File[]} [images] - Resolution images
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async updateIssueStatus(issueId, data, images = []) {
-		const files = {};
-		if (images && images.length > 0) {
-			images.forEach((image, index) => {
-				files[`resolution_images[${index}]`] = image;
-			});
-		}
-
-		return httpClient.post(
-			API_ROUTES.resolver.updateStatus(issueId),
-			{
-				status: data.status,
-				resolution_notes: data.resolution_notes || data.notes,
-			},
-			{
-				auth: true,
-				files: Object.keys(files).length > 0 ? files : null,
-			}
-		);
+	async getIssueById() {
+		return ApiResponse.error("Use IssueService.getById instead");
 	},
-
-	/**
-	 * Add resolution timeline update
-	 * @param {number|string} issueId
-	 * @param {Object} data
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async addTimelineUpdate(issueId, data) {
-		return httpClient.post(API_ROUTES.resolver.addTimeline(issueId), data, {
-			auth: true,
-		});
+	async updateIssueStatus() {
+		return ApiResponse.error("Use IssueService.updateStatus instead");
 	},
-
-	/**
-	 * Get resolver statistics
-	 * @returns {Promise<ApiResponse>}
-	 */
+	async addProgressUpdate() {
+		return ApiResponse.error("Use ProgressService.create instead");
+	},
+	async resolveIssue() {
+		return ApiResponse.error("Use IssueService.updateStatus instead");
+	},
+	async requestMoreInfo() {
+		return ApiResponse.error("Functionality not available");
+	},
 	async getStats() {
-		return httpClient.get(API_ROUTES.resolver.stats, { auth: true });
+		return ApiResponse.success({
+			total_resolved: 0,
+			average_resolution_time: 0,
+			satisfaction_rating: 0,
+		});
 	},
-
-	/**
-	 * Get available issues in resolver's department/area
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getAvailableIssues(params = {}) {
-		return httpClient.get(API_ROUTES.resolver.availableIssues, {
-			auth: true,
-			params,
+	async getPerformanceMetrics() {
+		return ApiResponse.success({
+			issues_resolved: 0,
+			avg_time: 0,
+			rating: 0,
 		});
 	},
 };

@@ -2,10 +2,16 @@
  * Modules Index
  * Central export point for all service modules
  *
- * Structure:
- * - API Layer: Core HTTP client, config, and response handling
- * - Services: Domain-specific business logic
- * - Models: Data structures (within each service)
+ * Backend API Structure:
+ * - /auth/ - Authentication (signup, login, token refresh/verify, user profile)
+ * - /issues/ - Issue management (CRUD operations)
+ * - /comments/ - Comment management
+ * - /progress/ - Progress tracking (Staff only)
+ *
+ * User Roles:
+ * - Admin (is_admin=true) - Full system access
+ * - Staff (is_staff=true) - Manage issues and progress
+ * - Regular User - Create issues and comments
  */
 
 // API Layer
@@ -15,17 +21,6 @@ export {
 	ApiResponse,
 	TokenManager,
 } from "./api/http_client";
-export { BaseService, createService } from "./api/base_service";
-
-// Models
-export {
-	BaseModel,
-	UserModel,
-	IssueModel,
-	CommentModel,
-	NotificationModel,
-	PaginatedResult,
-} from "./models";
 
 // Auth Service
 export { AuthService } from "./auth";
@@ -34,7 +29,13 @@ export { AuthService } from "./auth";
 export { UserService } from "./users";
 export { IssueService } from "./issues";
 export { CommentService } from "./comments";
-export { NotificationService } from "./notifications";
-export { ResolverService } from "./resolver";
+export { ProgressService } from "./progress";
+
+// Deprecated services (stubbed, for backward compatibility)
 export { AdminService } from "./admin";
+export { ResolverService } from "./resolver";
+export { NotificationService } from "./notifications";
 export { CoreService, AnalyticsService } from "./core";
+
+// Models (still usable for data transformation)
+export * from "./models";

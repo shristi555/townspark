@@ -1,314 +1,106 @@
 /**
  * Admin Service
- * Handles all admin-related API calls
+ * DEPRECATED: These endpoints no longer exist in the new backend.
+ * Stubbed to return empty data to prevent crashes.
+ * Admin functionality is now determined by is_admin flag on user.
  */
 
-import httpClient from "../api/http_client";
-import { API_ROUTES } from "../api/config";
+import { ApiResponse } from "../api/http_client";
 
 export const AdminService = {
-	// ==================== Dashboard ====================
-
-	/**
-	 * Get admin dashboard data
-	 * @returns {Promise<ApiResponse>}
-	 */
 	async getDashboard() {
-		return httpClient.get(API_ROUTES.admin.dashboard, { auth: true });
-	},
-
-	// ==================== Users ====================
-
-	/**
-	 * Get all users with filters
-	 * @param {Object} [params]
-	 * @param {string} [params.role] - Filter by role
-	 * @param {boolean} [params.is_active] - Filter by active status
-	 * @param {string} [params.search] - Search term
-	 * @param {number} [params.page] - Page number
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getUsers(params = {}) {
-		return httpClient.get(API_ROUTES.admin.users.list, {
-			auth: true,
-			params,
+		return ApiResponse.success({
+			total_users: 0,
+			total_issues: 0,
+			pending_verifications: 0,
 		});
 	},
-
-	/**
-	 * Get user by ID (admin view)
-	 * @param {number|string} userId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getUserById(userId) {
-		return httpClient.get(API_ROUTES.admin.users.byId(userId), {
-			auth: true,
-		});
+	async getUsers() {
+		return ApiResponse.success({ results: [], count: 0 });
 	},
-
-	/**
-	 * Update user (admin action)
-	 * @param {number|string} userId
-	 * @param {Object} data
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async updateUser(userId, data) {
-		return httpClient.patch(API_ROUTES.admin.users.byId(userId), data, {
-			auth: true,
-		});
+	async getUserById() {
+		return ApiResponse.error("Admin user management not available");
 	},
-
-	/**
-	 * Ban a user
-	 * @param {number|string} userId
-	 * @param {Object} data
-	 * @param {string} [data.reason] - Ban reason
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async banUser(userId, data = {}) {
-		return httpClient.post(API_ROUTES.admin.users.ban(userId), data, {
-			auth: true,
-		});
+	async updateUser() {
+		return ApiResponse.error("Admin user management not available");
 	},
-
-	/**
-	 * Unban a user
-	 * @param {number|string} userId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async unbanUser(userId) {
-		return httpClient.post(
-			API_ROUTES.admin.users.unban(userId),
-			{},
-			{ auth: true }
-		);
+	async banUser() {
+		return ApiResponse.error("Admin user management not available");
 	},
-
-	// ==================== Resolvers ====================
-
-	/**
-	 * Get pending resolver verifications
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getPendingResolvers(params = {}) {
-		return httpClient.get(API_ROUTES.admin.resolvers.pending, {
-			auth: true,
-			params,
-		});
+	async unbanUser() {
+		return ApiResponse.error("Admin user management not available");
 	},
-
-	/**
-	 * Get all resolvers
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getResolvers(params = {}) {
-		return httpClient.get(API_ROUTES.admin.resolvers.list, {
-			auth: true,
-			params,
-		});
+	async toggleUserStatus() {
+		return ApiResponse.error("Admin user management not available");
 	},
-
-	/**
-	 * Verify a resolver
-	 * @param {number|string} resolverId
-	 * @param {Object} data
-	 * @param {boolean} data.approved - Whether to approve
-	 * @param {string} [data.rejection_reason] - Reason if rejected
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async verifyResolver(resolverId, data) {
-		return httpClient.post(
-			API_ROUTES.admin.resolvers.verify(resolverId),
-			data,
-			{ auth: true }
-		);
+	async deleteUser() {
+		return ApiResponse.error("Admin user management not available");
 	},
-
-	/**
-	 * Assign area to resolver
-	 * @param {number|string} resolverId
-	 * @param {Object} data
-	 * @param {string[]} data.areas - Area IDs
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async assignArea(resolverId, data) {
-		return httpClient.post(
-			API_ROUTES.admin.resolvers.assignArea(resolverId),
-			data,
-			{ auth: true }
-		);
+	async getPendingResolvers() {
+		return ApiResponse.success({ results: [], count: 0 });
 	},
-
-	// ==================== Issues ====================
-
-	/**
-	 * Get all issues (admin view)
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getIssues(params = {}) {
-		return httpClient.get(API_ROUTES.admin.issues.list, {
-			auth: true,
-			params,
-		});
+	async getPendingVerifications() {
+		return ApiResponse.success({ results: [], count: 0 });
 	},
-
-	/**
-	 * Assign issue to resolver
-	 * @param {number|string} issueId
-	 * @param {Object} data
-	 * @param {number|string} data.resolver_id - Resolver to assign
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async assignIssue(issueId, data) {
-		return httpClient.post(API_ROUTES.admin.issues.assign(issueId), data, {
-			auth: true,
-		});
+	async getResolvers() {
+		return ApiResponse.success({ results: [], count: 0 });
 	},
-
-	/**
-	 * Update issue priority
-	 * @param {number|string} issueId
-	 * @param {Object} data
-	 * @param {string} data.priority - New priority
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async updatePriority(issueId, data) {
-		return httpClient.post(
-			API_ROUTES.admin.issues.priority(issueId),
-			data,
-			{ auth: true }
-		);
+	async verifyResolver() {
+		return ApiResponse.error("Resolver verification not available");
 	},
-
-	/**
-	 * Delete an issue (admin action)
-	 * @param {number|string} issueId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async deleteIssue(issueId) {
-		return httpClient.delete(API_ROUTES.admin.issues.delete(issueId), {
-			auth: true,
-		});
+	async approveResolver() {
+		return ApiResponse.error("Resolver approval not available");
 	},
-
-	// ==================== Categories ====================
-
-	/**
-	 * Get all categories
-	 * @returns {Promise<ApiResponse>}
-	 */
+	async rejectResolver() {
+		return ApiResponse.error("Resolver rejection not available");
+	},
+	async assignArea() {
+		return ApiResponse.error("Area assignment not available");
+	},
+	async getIssues() {
+		return ApiResponse.success({ results: [], count: 0 });
+	},
+	async assignIssue() {
+		return ApiResponse.error("Issue assignment not available");
+	},
+	async updatePriority() {
+		return ApiResponse.error("Priority update not available");
+	},
+	async deleteIssue() {
+		return ApiResponse.error("Issue deletion not available");
+	},
 	async getCategories() {
-		return httpClient.get(API_ROUTES.admin.categories.list, { auth: true });
+		return ApiResponse.success([]);
 	},
-
-	/**
-	 * Create a category
-	 * @param {Object} data
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async createCategory(data) {
-		return httpClient.post(API_ROUTES.admin.categories.create, data, {
-			auth: true,
-		});
+	async createCategory() {
+		return ApiResponse.error("Category management not available");
 	},
-
-	/**
-	 * Update a category
-	 * @param {number|string} categoryId
-	 * @param {Object} data
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async updateCategory(categoryId, data) {
-		return httpClient.patch(
-			API_ROUTES.admin.categories.byId(categoryId),
-			data,
-			{ auth: true }
-		);
+	async updateCategory() {
+		return ApiResponse.error("Category management not available");
 	},
-
-	/**
-	 * Delete a category
-	 * @param {number|string} categoryId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async deleteCategory(categoryId) {
-		return httpClient.delete(API_ROUTES.admin.categories.byId(categoryId), {
-			auth: true,
-		});
+	async deleteCategory() {
+		return ApiResponse.error("Category management not available");
 	},
-
-	// ==================== Areas ====================
-
-	/**
-	 * Get all areas
-	 * @returns {Promise<ApiResponse>}
-	 */
 	async getAreas() {
-		return httpClient.get(API_ROUTES.admin.areas.list, { auth: true });
+		return ApiResponse.success([]);
 	},
-
-	/**
-	 * Create an area
-	 * @param {Object} data
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async createArea(data) {
-		return httpClient.post(API_ROUTES.admin.areas.create, data, {
-			auth: true,
-		});
+	async createArea() {
+		return ApiResponse.error("Area management not available");
 	},
-
-	/**
-	 * Update an area
-	 * @param {number|string} areaId
-	 * @param {Object} data
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async updateArea(areaId, data) {
-		return httpClient.patch(API_ROUTES.admin.areas.byId(areaId), data, {
-			auth: true,
-		});
+	async updateArea() {
+		return ApiResponse.error("Area management not available");
 	},
-
-	/**
-	 * Delete an area
-	 * @param {number|string} areaId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async deleteArea(areaId) {
-		return httpClient.delete(API_ROUTES.admin.areas.byId(areaId), {
-			auth: true,
-		});
+	async deleteArea() {
+		return ApiResponse.error("Area management not available");
 	},
-
-	// ==================== Reports & Analytics ====================
-
-	/**
-	 * Get user reports
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getReports(params = {}) {
-		return httpClient.get(API_ROUTES.admin.reports, {
-			auth: true,
-			params,
-		});
+	async getReports() {
+		return ApiResponse.success({ results: [], count: 0 });
 	},
-
-	/**
-	 * Handle a report
-	 * @param {number|string} reportId
-	 * @param {Object} data
-	 * @param {string} data.action - Action to take
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async handleReport(reportId, data) {
-		return httpClient.post(API_ROUTES.admin.handleReport(reportId), data, {
-			auth: true,
-		});
+	async getRecentActivity() {
+		return ApiResponse.success({ results: [], count: 0 });
+	},
+	async handleReport() {
+		return ApiResponse.error("Report handling not available");
 	},
 };
 

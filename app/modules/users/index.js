@@ -1,6 +1,13 @@
 /**
  * User Service
  * Handles all user-related API calls
+ *
+ * Backend Endpoints:
+ * - GET /auth/users/me/ - Get current user profile
+ * - PUT/PATCH /auth/users/me/ - Update current user profile
+ *
+ * User Fields: id, email, full_name, phone_number, address, profile_image, is_active, is_staff, is_admin
+ * Public Fields (for other users): full_name, address, profile_image
  */
 
 import httpClient from "../api/http_client";
@@ -18,87 +25,27 @@ export const UserService = {
 	/**
 	 * Update current user profile
 	 * @param {Object} userData
+	 * @param {string} [userData.full_name]
+	 * @param {string} [userData.phone_number] - 7-13 digits
+	 * @param {string} [userData.address]
 	 * @param {File} [profileImage]
 	 * @returns {Promise<ApiResponse>}
 	 */
 	async updateProfile(userData, profileImage = null) {
+		const payload = {};
+
+		// Map common frontend field names to backend field names
+		if (userData.full_name) payload.full_name = userData.full_name;
+		if (userData.name) payload.full_name = userData.name;
+		if (userData.phone_number) payload.phone_number = userData.phone_number;
+		if (userData.phone) payload.phone_number = userData.phone;
+		if (userData.address) payload.address = userData.address;
+
 		const files = profileImage ? { profile_image: profileImage } : null;
 
-		return httpClient.patch(
-			API_ROUTES.users.me,
-			{
-				full_name: userData.name,
-				phone_number: userData.phone,
-				address: userData.address,
-				ward: userData.ward,
-				bio: userData.bio,
-				location: userData.location,
-			},
-			{ auth: true, files }
-		);
-	},
-
-	/**
-	 * Get user by ID
-	 * @param {number|string} userId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getUserById(userId) {
-		return httpClient.get(API_ROUTES.users.byId(userId));
-	},
-
-	/**
-	 * Get current user's issues
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getMyIssues(params = {}) {
-		return httpClient.get(API_ROUTES.users.myIssues, {
+		return httpClient.patch(API_ROUTES.users.me, payload, {
 			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get current user's bookmarked issues
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getMyBookmarks(params = {}) {
-		return httpClient.get(API_ROUTES.users.myBookmarks, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get current user's upvoted issues
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getMyUpvoted(params = {}) {
-		return httpClient.get(API_ROUTES.users.myUpvoted, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get user settings
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getSettings() {
-		return httpClient.get(API_ROUTES.users.mySettings, { auth: true });
-	},
-
-	/**
-	 * Update user settings
-	 * @param {Object} settings
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async updateSettings(settings) {
-		return httpClient.patch(API_ROUTES.users.mySettings, settings, {
-			auth: true,
+			files,
 		});
 	},
 };

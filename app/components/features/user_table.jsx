@@ -20,11 +20,17 @@ export default function UserTable({
 		return new Date(dateString).toLocaleDateString();
 	};
 
+	const getUserRole = (user) => {
+		if (user.is_admin) return "admin";
+		if (user.is_staff) return "staff";
+		return "citizen";
+	};
+
 	const getRoleBadgeColor = (role) => {
 		switch (role) {
 			case "admin":
 				return "bg-purple-500/10 text-purple-600 dark:text-purple-400";
-			case "resolver":
+			case "staff":
 				return "bg-blue-500/10 text-blue-600 dark:text-blue-400";
 			case "citizen":
 				return "bg-green-500/10 text-green-600 dark:text-green-400";
@@ -95,13 +101,13 @@ export default function UserTable({
 									<td className='py-3 px-4'>
 										<span
 											className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(
-												user.role
+												getUserRole(user)
 											)}`}
 										>
-											{user.role
-												?.charAt(0)
+											{getUserRole(user)
+												.charAt(0)
 												.toUpperCase() +
-												user.role?.slice(1)}
+												getUserRole(user).slice(1)}
 										</span>
 									</td>
 								)}

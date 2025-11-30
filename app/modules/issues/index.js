@@ -1,6 +1,15 @@
 /**
  * Issue Service
  * Handles all issue-related API calls
+ *
+ * Backend Endpoints:
+ * - POST /issues/new/ - Create new issue
+ * - GET /issues/list/ - List issues (user sees own, staff sees all)
+ * - GET /issues/detail/{id}/ - Get issue details
+ * - PUT/PATCH /issues/update/{id}/ - Update issue
+ * - DELETE /issues/delete/{id}/ - Delete issue
+ *
+ * Status Values: open, in_progress, resolved, closed
  */
 
 import httpClient from "../api/http_client";
@@ -8,32 +17,21 @@ import { API_ROUTES } from "../api/config";
 
 export const IssueService = {
 	/**
-	 * Get all issues with filtering and pagination
+	 * Get all issues with optional status filter
+	 * Regular users see only their own issues
+	 * Staff/Admin users see all issues
 	 * @param {Object} [params] - Query parameters
-	 * @param {string} [params.status] - Filter by status
-	 * @param {string} [params.category] - Filter by category
-	 * @param {string} [params.urgency] - Filter by urgency
-	 * @param {string} [params.area] - Filter by area
-	 * @param {string} [params.sort] - Sort field (newest, oldest, most_upvoted, most_commented)
-	 * @param {number} [params.page] - Page number
-	 * @param {string} [params.search] - Search term
+	 * @param {string} [params.status] - Filter by status (open, in_progress, resolved, closed)
 	 * @returns {Promise<ApiResponse>}
 	 */
 	async getIssues(params = {}) {
-		// Map frontend params to backend params
 		const queryParams = {};
-
 		if (params.status) queryParams.status = params.status;
-		if (params.category) queryParams.category = params.category;
-		if (params.urgency) queryParams.urgency = params.urgency;
-		if (params.area) queryParams.area = params.area;
-		if (params.sort) queryParams.sort = params.sort;
-		if (params.page) queryParams.page = params.page;
-		if (params.search) queryParams.search = params.search;
-		if (params.is_public !== undefined)
-			queryParams.is_public = params.is_public;
 
-		return httpClient.get(API_ROUTES.issues.list, { params: queryParams });
+		return httpClient.get(API_ROUTES.issues.list, {
+			auth: true,
+			params: queryParams,
+		});
 	},
 
 	/**
@@ -42,142 +40,63 @@ export const IssueService = {
 	 * @returns {Promise<ApiResponse>}
 	 */
 	async getIssueById(issueId) {
-		return httpClient.get(API_ROUTES.issues.byId(issueId));
+		return httpClient.get(API_ROUTES.issues.detail(issueId), {
+			auth: true,
+		});
 	},
 
 	/**
 	 * Create a new issue
 	 * @param {Object} issueData
-	 * @param {File[]} [images] - Array of image files
+	 * @param {string} issueData.title - Issue title (required)
+	 * @param {string} issueData.description - Issue description (required)
 	 * @returns {Promise<ApiResponse>}
 	 */
-	async createIssue(issueData, images = []) {
-		const payload = {
-			title: issueData.title,
-			description: issueData.description,
-			category: issueData.category,
-			urgency_level: issueData.urgency || issueData.urgency_level,
-			location: issueData.location,
-			latitude: issueData.latitude,
-			longitude: issueData.longitude,
-			area: issueData.area,
-			is_anonymous: issueData.is_anonymous || false,
-			is_public: issueData.is_public !== false,
-		};
-
-		// Handle images
-		const files = {};
-		if (images && images.length > 0) {
-			images.forEach((image, index) => {
-				files[`images[${index}]`] = image;
-			});
-		}
-
-		return httpClient.post(API_ROUTES.issues.create, payload, {
-			auth: true,
-			files: Object.keys(files).length > 0 ? files : null,
-		});
+	async createIssue(issueData) {
+		return httpClient.post(
+			API_ROUTES.issues.create,
+			{
+				title: issueData.title,
+				description: issueData.description,
+			},
+			{ auth: true }
+		);
 	},
 
 	/**
 	 * Update an issue
+	 * Regular users can update title/description of their own issues
+	 * Staff/Admin can update any issue including status
 	 * @param {number|string} issueId
 	 * @param {Object} updateData
+	 * @param {string} [updateData.title]
+	 * @param {string} [updateData.description]
+	 * @param {string} [updateData.status] - Staff/Admin only for "resolved"
 	 * @returns {Promise<ApiResponse>}
 	 */
 	async updateIssue(issueId, updateData) {
-		return httpClient.patch(API_ROUTES.issues.byId(issueId), updateData, {
+		const payload = {};
+		if (updateData.title) payload.title = updateData.title;
+		if (updateData.description)
+			payload.description = updateData.description;
+		if (updateData.status) payload.status = updateData.status;
+
+		return httpClient.patch(API_ROUTES.issues.update(issueId), payload, {
 			auth: true,
 		});
 	},
 
 	/**
 	 * Delete an issue
+	 * Regular users can only delete their own issues
+	 * Staff/Admin can delete any issue
 	 * @param {number|string} issueId
 	 * @returns {Promise<ApiResponse>}
 	 */
 	async deleteIssue(issueId) {
-		return httpClient.delete(API_ROUTES.issues.byId(issueId), {
+		return httpClient.delete(API_ROUTES.issues.delete(issueId), {
 			auth: true,
 		});
-	},
-
-	/**
-	 * Upvote an issue
-	 * @param {number|string} issueId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async upvote(issueId) {
-		return httpClient.post(
-			API_ROUTES.issues.upvote(issueId),
-			{},
-			{ auth: true }
-		);
-	},
-
-	/**
-	 * Remove upvote from an issue
-	 * @param {number|string} issueId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async removeUpvote(issueId) {
-		return httpClient.delete(API_ROUTES.issues.upvote(issueId), {
-			auth: true,
-		});
-	},
-
-	/**
-	 * Bookmark an issue
-	 * @param {number|string} issueId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async bookmark(issueId) {
-		return httpClient.post(
-			API_ROUTES.issues.bookmark(issueId),
-			{},
-			{ auth: true }
-		);
-	},
-
-	/**
-	 * Remove bookmark from an issue
-	 * @param {number|string} issueId
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async removeBookmark(issueId) {
-		return httpClient.delete(API_ROUTES.issues.bookmark(issueId), {
-			auth: true,
-		});
-	},
-
-	/**
-	 * Get trending issues
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getTrending(params = {}) {
-		return httpClient.get(API_ROUTES.issues.trending, { params });
-	},
-
-	/**
-	 * Get nearby issues (requires lat/long)
-	 * @param {number} latitude
-	 * @param {number} longitude
-	 * @param {number} [radius=5] - Radius in km
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getNearby(latitude, longitude, radius = 5) {
-		return httpClient.get(API_ROUTES.issues.nearby, {
-			params: { latitude, longitude, radius },
-		});
-	},
-
-	/**
-	 * Get issue statistics
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getStats() {
-		return httpClient.get(API_ROUTES.issues.stats);
 	},
 };
 

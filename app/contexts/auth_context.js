@@ -26,20 +26,13 @@ const AUTH_ERROR_MESSAGES = {
 			"Unable to sign in. Please check your credentials and try again.",
 		network: "Connection failed. Please check your internet and try again.",
 		invalid_credentials: "Invalid email or password. Please try again.",
-		account_locked: "Your account has been locked. Please contact support.",
-		account_inactive: "Your account is inactive. Please verify your email.",
-		too_many_attempts: "Too many failed attempts. Please try again later.",
+		account_inactive: "Your account is inactive. Please contact support.",
 	},
 	register: {
 		default: "Unable to create account. Please try again.",
 		email_exists: "An account with this email already exists.",
 		invalid_data: "Please check your information and try again.",
 		password_weak: "Password is too weak. Please use a stronger password.",
-	},
-	registerResolver: {
-		default: "Unable to submit resolver application. Please try again.",
-		invalid_credentials: "Invalid professional credentials provided.",
-		pending_application: "You already have a pending application.",
 	},
 	fetchUser: {
 		default: "Unable to load your profile. Please refresh the page.",
@@ -295,44 +288,6 @@ export function AuthProvider({ children }) {
 	);
 
 	/**
-	 * Register as resolver
-	 * @param {Object} resolverData
-	 * @returns {Promise<{success: boolean, error?: string}>}
-	 */
-	const registerResolver = useCallback(async (resolverData) => {
-		setLoading(true);
-		setError(null);
-
-		try {
-			const response = await AuthService.registerResolver(resolverData);
-
-			if (response.success) {
-				return { success: true, data: response.data };
-			}
-
-			logAuthError("registerResolver", response, {
-				email: resolverData?.email,
-			});
-			const errorMsg = getAuthErrorMessage(
-				response.error,
-				"registerResolver"
-			);
-			setError(errorMsg);
-			return { success: false, error: errorMsg };
-		} catch (err) {
-			logAuthError("registerResolver", err, {
-				email: resolverData?.email,
-				isUnexpected: true,
-			});
-			const errorMsg = getAuthErrorMessage(err, "registerResolver");
-			setError(errorMsg);
-			return { success: false, error: errorMsg };
-		} finally {
-			setLoading(false);
-		}
-	}, []);
-
-	/**
 	 * Logout user
 	 */
 	const logout = useCallback(async () => {
@@ -368,12 +323,22 @@ export function AuthProvider({ children }) {
 
 	/**
 	 * Check if user has specific role
-	 * @param {string} role
+	 * @param {string} role - 'admin', 'staff', or 'user'
 	 * @returns {boolean}
 	 */
 	const hasRole = useCallback(
 		(role) => {
-			return user?.role === role;
+			if (!user) return false;
+			switch (role) {
+				case "admin":
+					return user.is_admin === true;
+				case "staff":
+					return user.is_staff === true;
+				case "user":
+					return !user.is_admin && !user.is_staff;
+				default:
+					return false;
+			}
 		},
 		[user]
 	);
@@ -385,11 +350,13 @@ export function AuthProvider({ children }) {
 
 	/**
 	 * Check various role states
+	 * Backend uses is_admin and is_staff boolean fields
 	 */
-	const isAdmin = user?.role === "admin";
-	const isResolver = user?.role === "resolver";
-	const isCitizen = user?.role === "citizen";
-	const isVerified = user?.is_verified || false;
+	const isAdmin = user?.is_admin === true;
+	const isStaff = user?.is_staff === true;
+	const isResolver = user?.is_staff === true; // Alias for staff
+	const isCitizen = !isAdmin && !isStaff;
+	const isActive = user?.is_active !== false;
 
 	const value = {
 		user,
@@ -397,13 +364,13 @@ export function AuthProvider({ children }) {
 		error,
 		isAuthenticated,
 		isAdmin,
+		isStaff,
 		isResolver,
 		isCitizen,
-		isVerified,
+		isActive,
 		login,
 		logout,
 		register,
-		registerResolver,
 		refreshUser,
 		updateUserLocally,
 		hasRole,

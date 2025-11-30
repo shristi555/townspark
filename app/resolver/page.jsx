@@ -14,90 +14,61 @@ import {
 	Card,
 } from "../components/ui";
 import { useAuth } from "../contexts/auth_context";
-import { ResolverService } from "../modules";
+import { IssueService, ProgressService } from "../modules";
 import Link from "next/link";
 
 export default function ResolverDashboard() {
 	const router = useRouter();
 	const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const [activeTab, setActiveTab] = useState("assigned");
+	const [activeTab, setActiveTab] = useState("all");
 	const [statusFilter, setStatusFilter] = useState("all");
 
 	// Data states
-	const [assignedIssues, setAssignedIssues] = useState([]);
+	const [allIssues, setAllIssues] = useState([]);
+	const [inProgressIssues, setInProgressIssues] = useState([]);
 	const [resolvedIssues, setResolvedIssues] = useState([]);
-	const [pendingIssues, setPendingIssues] = useState([]);
-	const [stats, setStats] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
-	// Check if user is resolver
+	// Check if user is staff (resolver) or admin
 	useEffect(() => {
 		if (!authLoading) {
 			if (!isAuthenticated) {
 				router.push("/login");
 				return;
 			}
-			if (user && user.role !== "resolver" && user.role !== "admin") {
+			if (user && !user.is_staff && !user.is_admin) {
 				router.push("/feed");
-				return;
-			}
-			// Check if resolver is verified
-			if (user && user.role === "resolver" && !user.is_verified) {
-				router.push("/resolver/pending");
 				return;
 			}
 		}
 	}, [authLoading, isAuthenticated, user, router]);
 
-	// Fetch resolver dashboard data
+	// Fetch staff dashboard data
 	useEffect(() => {
 		const fetchDashboardData = async () => {
-			if (!user || (user.role !== "resolver" && user.role !== "admin"))
-				return;
+			if (!user || (!user.is_staff && !user.is_admin)) return;
 
 			setLoading(true);
 			try {
-				// Fetch assigned issues
-				const assignedResponse =
-					await ResolverService.getAssignedIssues();
-				if (assignedResponse.success) {
+				// Fetch all issues
+				const issuesResponse = await IssueService.getIssues();
+				if (issuesResponse.success) {
 					const issues =
-						assignedResponse.data?.results ||
-						assignedResponse.data ||
+						issuesResponse.data?.results ||
+						issuesResponse.data ||
 						[];
-					setAssignedIssues(
-						issues.filter((i) => i.status !== "resolved")
+					setAllIssues(issues);
+					setInProgressIssues(
+						issues.filter((i) => i.status === "in_progress")
 					);
-				}
-
-				// Fetch resolved issues
-				const resolvedResponse =
-					await ResolverService.getResolvedIssues();
-				if (resolvedResponse.success) {
 					setResolvedIssues(
-						resolvedResponse.data?.results ||
-							resolvedResponse.data ||
-							[]
+						issues.filter(
+							(i) =>
+								i.status === "resolved" || i.status === "closed"
+						)
 					);
-				}
-
-				// Fetch pending issues (available to claim)
-				const pendingResponse =
-					await ResolverService.getPendingIssues();
-				if (pendingResponse.success) {
-					setPendingIssues(
-						pendingResponse.data?.results ||
-							pendingResponse.data ||
-							[]
-					);
-				}
-
-				// Fetch resolver stats
-				const statsResponse = await ResolverService.getStats();
-				if (statsResponse.success) {
-					setStats(statsResponse.data);
 				}
 			} catch (err) {
 				console.error("Failed to fetch dashboard data:", err);
@@ -107,89 +78,64 @@ export default function ResolverDashboard() {
 			}
 		};
 
-		if (user?.role === "resolver" || user?.role === "admin") {
+		if (user?.is_staff || user?.is_admin) {
 			fetchDashboardData();
 		}
 	}, [user]);
 
-	const resolverStats = stats
-		? [
-				{
-					label: "Assigned to You",
-					value: stats.assigned_count || assignedIssues.length,
-					icon: "assignment_ind",
-				},
-				{
-					label: "In Progress",
-					value:
-						stats.in_progress_count ||
-						assignedIssues.filter((i) => i.status === "in-progress")
-							.length,
-					icon: "engineering",
-					accent: true,
-				},
-				{
-					label: "Resolved This Month",
-					value: stats.resolved_this_month || resolvedIssues.length,
-					icon: "check_circle",
-				},
-				{
-					label: "Avg Resolution Time",
-					value: stats.avg_resolution_time || "N/A",
-					icon: "schedule",
-				},
-			]
-		: [
-				{
-					label: "Assigned to You",
-					value: assignedIssues.length,
-					icon: "assignment_ind",
-				},
-				{
-					label: "In Progress",
-					value: assignedIssues.filter(
-						(i) => i.status === "in-progress"
-					).length,
-					icon: "engineering",
-					accent: true,
-				},
-				{
-					label: "Resolved This Month",
-					value: resolvedIssues.length,
-					icon: "check_circle",
-				},
-				{
-					label: "Avg Resolution Time",
-					value: "N/A",
-					icon: "schedule",
-				},
-			];
+	const resolverStats = [
+		{
+			label: "Total Issues",
+			value: allIssues.length,
+			icon: "assignment",
+		},
+		{
+			label: "In Progress",
+			value: inProgressIssues.length,
+			icon: "engineering",
+			accent: true,
+		},
+		{
+			label: "Resolved",
+			value: resolvedIssues.length,
+			icon: "check_circle",
+		},
+		{
+			label: "Open Issues",
+			value: allIssues.filter((i) => i.status === "open").length,
+			icon: "schedule",
+		},
+	];
 
 	const tabs = [
-		{ id: "assigned", label: "Assigned", count: assignedIssues.length },
-		{ id: "pending", label: "Pending Review", count: pendingIssues.length },
+		{ id: "all", label: "All Issues", count: allIssues.length },
+		{
+			id: "in_progress",
+			label: "In Progress",
+			count: inProgressIssues.length,
+		},
 		{ id: "resolved", label: "Resolved", count: resolvedIssues.length },
 	];
 
 	const getTabIssues = () => {
 		let issues = [];
 		switch (activeTab) {
-			case "assigned":
-				issues = assignedIssues;
+			case "all":
+				issues = allIssues;
 				break;
-			case "pending":
-				issues = pendingIssues;
+			case "in_progress":
+				issues = inProgressIssues;
 				break;
 			case "resolved":
 				issues = resolvedIssues;
 				break;
 			default:
-				issues = assignedIssues;
+				issues = allIssues;
 		}
 
-		// Apply priority filter if not "all"
+		// Apply status filter if not "all"
 		if (statusFilter !== "all") {
-			issues = issues.filter((i) => i.urgency === statusFilter);
+			issues = issues.filter((i) => i.status === statusFilter);
 		}
 
 		return issues;
@@ -236,7 +182,7 @@ export default function ResolverDashboard() {
 
 			<div className='md:ml-72'>
 				<Header
-					title='Resolver Dashboard'
+					title='Staff Dashboard'
 					actions={
 						<button
 							onClick={() => setSidebarOpen(true)}
@@ -256,14 +202,19 @@ export default function ResolverDashboard() {
 							<div>
 								<h1 className='text-2xl font-bold text-text-primary-light dark:text-text-primary-dark'>
 									Welcome back,{" "}
-									{user?.full_name ||
+									{user?.first_name ||
 										user?.username ||
-										"Resolver"}
+										"Staff"}
 									! 👋
 								</h1>
 								<p className='text-text-secondary-light dark:text-text-secondary-dark mt-1'>
-									You have {assignedIssues.length} issues
-									assigned to you
+									You have{" "}
+									{
+										allIssues.filter(
+											(i) => i.status === "open"
+										).length
+									}{" "}
+									open issues to review
 								</p>
 							</div>
 							<div className='flex items-center gap-2'>
@@ -274,7 +225,7 @@ export default function ResolverDashboard() {
 									<span className='material-symbols-outlined mr-1 text-sm'>
 										verified
 									</span>
-									Verified Resolver
+									{user?.is_admin ? "Admin" : "Staff"}
 								</Badge>
 							</div>
 						</div>
@@ -305,15 +256,21 @@ export default function ResolverDashboard() {
 									options={[
 										{
 											value: "all",
-											label: "All Priorities",
+											label: "All Statuses",
 										},
 										{
-											value: "critical",
-											label: "Critical",
+											value: "open",
+											label: "Open",
 										},
-										{ value: "high", label: "High" },
-										{ value: "normal", label: "Normal" },
-										{ value: "low", label: "Low" },
+										{
+											value: "in_progress",
+											label: "In Progress",
+										},
+										{
+											value: "resolved",
+											label: "Resolved",
+										},
+										{ value: "closed", label: "Closed" },
 									]}
 									className='text-sm'
 								/>
@@ -322,7 +279,7 @@ export default function ResolverDashboard() {
 
 						{/* Content */}
 						<div className='p-4'>
-							{["assigned", "pending", "resolved"].map((tab) => (
+							{["all", "in_progress", "resolved"].map((tab) => (
 								<TabPanel
 									key={tab}
 									id={tab}
@@ -332,13 +289,13 @@ export default function ResolverDashboard() {
 										issues={getTabIssues()}
 										showFilters={false}
 										cardVariant='detailed'
-										emptyTitle={`No ${tab} issues`}
+										emptyTitle={`No ${tab === "all" ? "" : tab.replace("_", " ")} issues`}
 										emptyDescription={
-											tab === "assigned"
-												? "New issues will appear here when assigned to you"
-												: tab === "pending"
-													? "No issues pending your review"
-													: "Issues you resolve will appear here"
+											tab === "all"
+												? "No issues have been reported yet"
+												: tab === "in_progress"
+													? "No issues currently in progress"
+													: "No resolved issues yet"
 										}
 									/>
 								</TabPanel>

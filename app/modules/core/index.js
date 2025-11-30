@@ -1,142 +1,67 @@
 /**
  * Core Service
- * Handles core/shared API calls like categories, areas, analytics
+ * DEPRECATED: These endpoints no longer exist in the new backend.
+ * Stubbed to return empty data to prevent crashes.
  */
 
-import httpClient from "../api/http_client";
-import { API_ROUTES } from "../api/config";
+import { ApiResponse } from "../api/http_client";
 
 export const CoreService = {
-	/**
-	 * Get all categories (public)
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getCategories() {
-		return httpClient.get(API_ROUTES.core.categories);
-	},
-
-	/**
-	 * Get all areas (public)
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getAreas() {
-		return httpClient.get(API_ROUTES.core.areas);
-	},
-
-	/**
-	 * Get platform statistics (public)
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getPlatformStats() {
-		return httpClient.get(API_ROUTES.core.platformStats);
-	},
-
-	/**
-	 * Get ward list
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getWards() {
-		return httpClient.get(API_ROUTES.core.wards);
-	},
-
-	/**
-	 * Get departments
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getDepartments() {
-		return httpClient.get(API_ROUTES.core.departments);
-	},
+async getCategories() {
+return ApiResponse.success([]);
+},
+async getAreas() {
+return ApiResponse.success([]);
+},
+async getStats() {
+return ApiResponse.success({
+total_issues: 0,
+resolved_issues: 0,
+pending_issues: 0,
+});
+},
+async getDashboard() {
+return ApiResponse.success({
+recent_issues: [],
+stats: {},
+});
+},
 };
 
 export const AnalyticsService = {
-	/**
-	 * Get analytics overview
-	 * @param {Object} [params]
-	 * @param {string} [params.period] - Time period (week, month, year)
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getOverview(params = {}) {
-		return httpClient.get(API_ROUTES.analytics.overview, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get category-wise analytics
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getCategoryStats(params = {}) {
-		return httpClient.get(API_ROUTES.analytics.byCategory, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get area-wise analytics
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getAreaStats(params = {}) {
-		return httpClient.get(API_ROUTES.analytics.byArea, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get trend data
-	 * @param {Object} [params]
-	 * @param {string} [params.period] - Time period
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getTrends(params = {}) {
-		return httpClient.get(API_ROUTES.analytics.trends, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get resolver performance analytics
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getResolverPerformance(params = {}) {
-		return httpClient.get(API_ROUTES.analytics.resolverPerformance, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Get resolution time analytics
-	 * @param {Object} [params]
-	 * @returns {Promise<ApiResponse>}
-	 */
-	async getResolutionTime(params = {}) {
-		return httpClient.get(API_ROUTES.analytics.resolutionTime, {
-			auth: true,
-			params,
-		});
-	},
-
-	/**
-	 * Export analytics report
-	 * @param {Object} params
-	 * @param {string} params.format - Export format (csv, pdf)
-	 * @param {string} [params.period] - Time period
-	 * @returns {Promise<Blob>}
-	 */
-	async exportReport(params) {
-		const response = await httpClient.get(API_ROUTES.analytics.export, {
-			auth: true,
-			params,
-		});
-		return response;
-	},
+async getDashboardStats() {
+return ApiResponse.success({
+total_users: 0,
+total_issues: 0,
+resolved_issues: 0,
+pending_issues: 0,
+});
+},
+async getIssueStats() {
+return ApiResponse.success({
+by_category: [],
+by_status: [],
+by_area: [],
+});
+},
+async getUserStats() {
+return ApiResponse.success({
+active_users: 0,
+new_users: 0,
+});
+},
+async getResolverStats() {
+return ApiResponse.success({
+total_resolvers: 0,
+issues_resolved: 0,
+});
+},
+async getTrends() {
+return ApiResponse.success({
+issues: [],
+resolutions: [],
+});
+},
 };
 
-export default { CoreService, AnalyticsService };
+export default CoreService;

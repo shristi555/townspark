@@ -1,501 +1,983 @@
-# TownSpark API Documentation
+# TownSpark API Documentation# TownSpark API Documentation
 
-> Complete API Reference for Frontend Integration
+> API Reference for Frontend Integration with the New Backend> Complete API Reference for Frontend Integration
 
-**Base URL:** `http://localhost:8000/api/v1`  
-**API Version:** v1  
-**Authentication:** JWT (Bearer Token)
+**Base URL:** `http://localhost:8000/api/v1` **Base URL:** `http://localhost:8000/api/v1`
+
+**API Version:** v1 **API Version:** v1
+
+**Authentication:** JWT (Bearer Token)**Authentication:** JWT (Bearer Token)
 
 ---
 
-## Table of Contents
+## Table of Contents## Table of Contents
 
-1. [Getting Started](#getting-started)
-2. [Authentication](#authentication)
-3. [Response Format](#response-format)
-4. [Error Handling](#error-handling)
-5. [Endpoints](#endpoints)
-    - [Auth](#auth-endpoints)
-    - [Users](#user-endpoints)
-    - [Issues](#issue-endpoints)
-    - [Comments](#comment-endpoints)
-    - [Notifications](#notification-endpoints)
+1. [Getting Started](#getting-started)1. [Getting Started](#getting-started)
+
+2. [Authentication](#authentication)2. [Authentication](#authentication)
+
+3. [User Roles](#user-roles)3. [Response Format](#response-format)
+
+4. [Endpoints](#endpoints)4. [Error Handling](#error-handling)
+    - [Auth](#auth-endpoints)5. [Endpoints](#endpoints)
+
+    - [Issues](#issue-endpoints) - [Auth](#auth-endpoints)
+
+    - [Comments](#comment-endpoints) - [Users](#user-endpoints)
+
+    - [Progress](#progress-endpoints) - [Issues](#issue-endpoints)
+
+5. [Response Format](#response-format) - [Comments](#comment-endpoints)
+
+6. [Error Handling](#error-handling) - [Notifications](#notification-endpoints)
     - [Core (Categories, Departments)](#core-endpoints)
-    - [Resolver](#resolver-endpoints)
+
+--- - [Resolver](#resolver-endpoints)
+
     - [Admin](#admin-endpoints)
-6. [Models & Types](#models--types)
+
+## Getting Started6. [Models & Types](#models--types)
+
 7. [Pagination](#pagination)
-8. [Filtering & Sorting](#filtering--sorting)
+
+### Making API Requests8. [Filtering & Sorting](#filtering--sorting)
+
 9. [File Uploads](#file-uploads)
 
----
+````javascript
 
-## Getting Started
+// Standard request headers---
 
-### Installation & Setup
+const headers = {
 
-```bash
-# Clone and install dependencies
-cd townspark_backend
+	"Content-Type": "application/json",## Getting Started
+
+	Accept: "application/json",
+
+};### Installation & Setup
+
+
+
+// For authenticated requests, add:```bash
+
+headers["Authorization"] = `Bearer ${accessToken}`;# Clone and install dependencies
+
+```cd townspark_backend
+
 uv sync
 
-# Run migrations
-uv run python manage.py migrate
-
-# Seed initial data (categories, departments, badges)
-uv run python manage.py seed_data
-
-# Start the server
-uv run python manage.py runserver 8000
-```
-
-### Making API Requests
-
-All API requests should include appropriate headers:
-
-```javascript
-// Standard request headers
-const headers = {
-	"Content-Type": "application/json",
-	Accept: "application/json",
-};
-
-// For authenticated requests, add:
-headers["Authorization"] = `Bearer ${accessToken}`;
-```
-
 ---
 
-## Authentication
+# Run migrations
 
-The API uses **JWT (JSON Web Tokens)** for authentication. Tokens are obtained via login and must be included in the `Authorization` header for protected endpoints.
+## Authenticationuv run python manage.py migrate
+
+
+
+The API uses **JWT (JSON Web Tokens)** for authentication.# Seed initial data (categories, departments, badges)
+
+uv run python manage.py seed_data
 
 ### Token Lifecycle
 
-| Token Type    | Lifetime | Purpose                  |
-| ------------- | -------- | ------------------------ |
+# Start the server
+
+| Token Type    | Lifetime | Purpose                  |uv run python manage.py runserver 8000
+
+| ------------- | -------- | ------------------------ |```
+
 | Access Token  | 1 day    | API authentication       |
-| Refresh Token | 7 days   | Obtain new access tokens |
 
-### How to Use Tokens
+| Refresh Token | 7 days   | Obtain new access tokens |### Making API Requests
 
-```javascript
-// Include in request headers
-fetch("/api/v1/users/me/", {
-	headers: {
-		Authorization: "Bearer <access_token>",
-	},
-});
-```
 
-### Token Refresh Flow
 
-1. When access token expires (HTTP 401), use refresh token to get new access token
-2. If refresh token is also expired, redirect user to login
+### Token Refresh FlowAll API requests should include appropriate headers:
 
----
 
-## Response Format
 
-### Success Response
+1. When access token expires (HTTP 401), use refresh token to get new access token```javascript
 
-All successful responses follow this structure:
+2. Refresh tokens are rotated on each refresh// Standard request headers
 
-```json
-{
-  "success": true,
-  "message": "Operation completed successfully",
-  "data": { ... }
-}
-```
+3. If refresh token is also expired, redirect user to loginconst headers = {
 
-### Paginated Response
+	"Content-Type": "application/json",
 
-```json
-{
-  "success": true,
-  "message": "Items retrieved successfully",
-  "data": {
-    "count": 100,
-    "next": "http://localhost:8000/api/v1/issues/?page=2",
-    "previous": null,
-    "results": [ ... ]
-  }
-}
-```
+---	Accept: "application/json",
 
-### Error Response
+};
 
-```json
-{
-	"success": false,
-	"error": {
-		"code": "ERROR_CODE",
-		"message": "Human-readable error message",
-		"details": {
-			"field_name": ["Specific error for this field"]
-		}
-	}
-}
-```
+## User Roles
+
+// For authenticated requests, add:
+
+| Role         | Fields                              | Permissions                           |headers["Authorization"] = `Bearer ${accessToken}`;
+
+| ------------ | ----------------------------------- | ------------------------------------- |```
+
+| **Admin**    | `is_admin=true`                     | Full system access                    |
+
+| **Staff**    | `is_staff=true`                     | Manage issues and progress            |---
+
+| **User**     | `is_admin=false, is_staff=false`    | Create issues and comments            |
+
+## Authentication
 
 ---
 
-## Error Handling
-
-### HTTP Status Codes
-
-| Status | Meaning      | When It Occurs                          |
-| ------ | ------------ | --------------------------------------- |
-| 200    | OK           | Successful GET, PATCH, DELETE           |
-| 201    | Created      | Successful POST (resource created)      |
-| 400    | Bad Request  | Validation errors, invalid data         |
-| 401    | Unauthorized | Missing or invalid token                |
-| 403    | Forbidden    | Insufficient permissions                |
-| 404    | Not Found    | Resource doesn't exist                  |
-| 409    | Conflict     | Duplicate entry (e.g., already upvoted) |
-| 500    | Server Error | Internal server error                   |
-
-### Common Error Codes
-
-| Error Code                | Description                   | Resolution                                |
-| ------------------------- | ----------------------------- | ----------------------------------------- |
-| `VALIDATION_ERROR`        | Invalid input data            | Check `details` for field-specific errors |
-| `AUTHENTICATION_REQUIRED` | No token provided             | Include Bearer token in header            |
-| `TOKEN_EXPIRED`           | Access token expired          | Refresh token or re-login                 |
-| `PERMISSION_DENIED`       | Not authorized                | Check user role/permissions               |
-| `NOT_FOUND`               | Resource doesn't exist        | Verify ID/endpoint                        |
-| `ALREADY_ASSIGNED`        | Issue already has resolver    | Cannot reassign                           |
-| `DUPLICATE_ENTRY`         | Already exists (upvote, etc.) | Toggle action instead                     |
-
-### Error Handling Example
-
-```javascript
-async function apiRequest(url, options) {
-	try {
-		const response = await fetch(url, options);
-		const data = await response.json();
-
-		if (!response.ok) {
-			switch (response.status) {
-				case 401:
-					// Token expired - try refresh
-					const newToken = await refreshToken();
-					if (newToken) {
-						options.headers["Authorization"] = `Bearer ${newToken}`;
-						return apiRequest(url, options);
-					}
-					// Redirect to login
-					window.location.href = "/login";
-					break;
-				case 403:
-					alert("You do not have permission for this action");
-					break;
-				case 400:
-					// Show field-specific errors
-					Object.entries(data.error.details || {}).forEach(
-						([field, errors]) => {
-							console.error(`${field}: ${errors.join(", ")}`);
-						}
-					);
-					break;
-				default:
-					alert(data.error?.message || "An error occurred");
-			}
-			throw new Error(data.error?.message);
-		}
-
-		return data;
-	} catch (error) {
-		console.error("API Error:", error);
-		throw error;
-	}
-}
-```
-
----
+The API uses **JWT (JSON Web Tokens)** for authentication. Tokens are obtained via login and must be included in the `Authorization` header for protected endpoints.
 
 ## Endpoints
 
+### Token Lifecycle
+
 ### Auth Endpoints
 
-#### POST `/auth/login/`
+| Token Type    | Lifetime | Purpose                  |
 
-Login with email and password.
+#### Register User| ------------- | -------- | ------------------------ |
+
+```http| Access Token  | 1 day    | API authentication       |
+
+POST /api/v1/auth/signup/| Refresh Token | 7 days   | Obtain new access tokens |
+
+````
+
+### How to Use Tokens
 
 **Request:**
 
-```json
-{
-	"email": "user@example.com",
-	"password": "securepassword123"
+`json`javascript
+
+{// Include in request headers
+
+"email": "user@example.com",fetch("/api/v1/users/me/", {
+
+"password": "securepassword123", headers: {
+
+"full_name": "John Doe", Authorization: "Bearer <access_token>",
+
+"phone_number": "+1234567890", },
+
+"address": "123 Main St"});
+
+}```
+
+````
+
+### Token Refresh Flow
+
+**Response (201):**
+
+```json1. When access token expires (HTTP 401), use refresh token to get new access token
+
+{2. If refresh token is also expired, redirect user to login
+
+  "id": 1,
+
+  "email": "user@example.com",---
+
+  "full_name": "John Doe",
+
+  "phone_number": "+1234567890",## Response Format
+
+  "address": "123 Main St",
+
+  "profile_image": null### Success Response
+
 }
-```
 
-**Success Response (200):**
+```All successful responses follow this structure:
+
+
+
+#### Login```json
+
+```http{
+
+POST /api/v1/auth/login/  "success": true,
+
+```  "message": "Operation completed successfully",
+
+  "data": { ... }
+
+**Request:**}
+
+```json```
+
+{
+
+  "email": "user@example.com",### Paginated Response
+
+  "password": "securepassword123"
+
+}```json
+
+```{
+
+  "success": true,
+
+**Response (200):**  "message": "Items retrieved successfully",
+
+```json  "data": {
+
+{    "count": 100,
+
+  "tokens": {    "next": "http://localhost:8000/api/v1/issues/?page=2",
+
+    "refresh": "eyJ...",    "previous": null,
+
+    "access": "eyJ..."    "results": [ ... ]
+
+  },  }
+
+  "user": {}
+
+    "id": 1,```
+
+    "email": "user@example.com",
+
+    "full_name": "John Doe",### Error Response
+
+    "phone_number": "+1234567890",
+
+    "address": "123 Main St",```json
+
+    "profile_image": null{
+
+  }	"success": false,
+
+}	"error": {
+
+```		"code": "ERROR_CODE",
+
+		"message": "Human-readable error message",
+
+#### Refresh Token		"details": {
+
+```http			"field_name": ["Specific error for this field"]
+
+POST /api/v1/auth/jwt/refresh/		}
+
+```	}
+
+}
+
+**Request:**```
 
 ```json
-{
-	"success": true,
+
+{---
+
+  "refresh": "eyJ..."
+
+}## Error Handling
+
+````
+
+### HTTP Status Codes
+
+**Response (200):**
+
+````json| Status | Meaning      | When It Occurs                          |
+
+{| ------ | ------------ | --------------------------------------- |
+
+  "access": "eyJ...",| 200    | OK           | Successful GET, PATCH, DELETE           |
+
+  "refresh": "eyJ..."| 201    | Created      | Successful POST (resource created)      |
+
+}| 400    | Bad Request  | Validation errors, invalid data         |
+
+```| 401    | Unauthorized | Missing or invalid token                |
+
+| 403    | Forbidden    | Insufficient permissions                |
+
+#### Verify Token| 404    | Not Found    | Resource doesn't exist                  |
+
+```http| 409    | Conflict     | Duplicate entry (e.g., already upvoted) |
+
+POST /api/v1/auth/jwt/verify/| 500    | Server Error | Internal server error                   |
+
+````
+
+### Common Error Codes
+
+**Request:**
+
+````json| Error Code                | Description                   | Resolution                                |
+
+{| ------------------------- | ----------------------------- | ----------------------------------------- |
+
+  "token": "eyJ..."| `VALIDATION_ERROR`        | Invalid input data            | Check `details` for field-specific errors |
+
+}| `AUTHENTICATION_REQUIRED` | No token provided             | Include Bearer token in header            |
+
+```| `TOKEN_EXPIRED`           | Access token expired          | Refresh token or re-login                 |
+
+| `PERMISSION_DENIED`       | Not authorized                | Check user role/permissions               |
+
+#### Get Current User| `NOT_FOUND`               | Resource doesn't exist        | Verify ID/endpoint                        |
+
+```http| `ALREADY_ASSIGNED`        | Issue already has resolver    | Cannot reassign                           |
+
+GET /api/v1/auth/users/me/| `DUPLICATE_ENTRY`         | Already exists (upvote, etc.) | Toggle action instead                     |
+
+Authorization: Bearer <access_token>
+
+```### Error Handling Example
+
+
+
+**Response (200):**```javascript
+
+```jsonasync function apiRequest(url, options) {
+
+{	try {
+
+  "id": 1,		const response = await fetch(url, options);
+
+  "email": "user@example.com",		const data = await response.json();
+
+  "full_name": "John Doe",
+
+  "phone_number": "+1234567890",		if (!response.ok) {
+
+  "address": "123 Main St",			switch (response.status) {
+
+  "profile_image": null				case 401:
+
+}					// Token expired - try refresh
+
+```					const newToken = await refreshToken();
+
+					if (newToken) {
+
+#### Update Profile						options.headers["Authorization"] = `Bearer ${newToken}`;
+
+```http						return apiRequest(url, options);
+
+PATCH /api/v1/auth/users/me/					}
+
+Authorization: Bearer <access_token>					// Redirect to login
+
+```					window.location.href = "/login";
+
+					break;
+
+**Request:**				case 403:
+
+```json					alert("You do not have permission for this action");
+
+{					break;
+
+  "full_name": "John Updated",				case 400:
+
+  "phone_number": "+9876543210",					// Show field-specific errors
+
+  "address": "456 New St"					Object.entries(data.error.details || {}).forEach(
+
+}						([field, errors]) => {
+
+```							console.error(`${field}: ${errors.join(", ")}`);
+
+						}
+
+---					);
+
+					break;
+
+### Issue Endpoints				default:
+
+					alert(data.error?.message || "An error occurred");
+
+#### Create Issue			}
+
+```http			throw new Error(data.error?.message);
+
+POST /api/v1/issues/new/		}
+
+Authorization: Bearer <access_token>
+
+```		return data;
+
+	} catch (error) {
+
+**Request:**		console.error("API Error:", error);
+
+```json		throw error;
+
+{	}
+
+  "title": "Pothole on Main Street",}
+
+  "description": "Large pothole causing traffic issues."```
+
+}
+
+```---
+
+
+
+**Response (201):**## Endpoints
+
+```json
+
+{### Auth Endpoints
+
+  "id": 1,
+
+  "title": "Pothole on Main Street",#### POST `/auth/login/`
+
+  "description": "Large pothole causing traffic issues.",
+
+  "status": "open",Login with email and password.
+
+  "created_at": "2024-01-01T12:00:00Z",
+
+  "updated_at": "2024-01-01T12:00:00Z",**Request:**
+
+  "created_by": {
+
+    "id": 1,```json
+
+    "email": "user@example.com"{
+
+  },	"email": "user@example.com",
+
+  "resolved_by": null	"password": "securepassword123"
+
+}}
+
+````
+
+#### List Issues**Success Response (200):**
+
+````http
+
+GET /api/v1/issues/list/```json
+
+Authorization: Bearer <access_token>{
+
+```	"success": true,
+
 	"message": "Login successful",
-	"data": {
-		"tokens": {
+
+**Query Parameters:**	"data": {
+
+- `status` - Filter by status (open, in_progress, resolved, closed)		"tokens": {
+
 			"access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			"refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+
+**Note:** Regular users see only their own issues. Staff/Admin see all issues.			"refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+
 		},
-		"user": {
-			"id": 1,
-			"name": "John Doe",
-			"email": "user@example.com",
-			"role": "citizen",
+
+#### Get Issue Details		"user": {
+
+```http			"id": 1,
+
+GET /api/v1/issues/detail/{id}/			"name": "John Doe",
+
+Authorization: Bearer <access_token>			"email": "user@example.com",
+
+```			"role": "citizen",
+
 			"profile_image": "http://localhost:8000/media/avatars/1.jpg"
-		}
-	}
-}
-```
+
+#### Update Issue		}
+
+```http	}
+
+PATCH /api/v1/issues/update/{id}/}
+
+Authorization: Bearer <access_token>```
+
+````
 
 **Error Responses:**
 
-| Error            | Status | Response                                                                                                                                             |
-| ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Email not found  | 400    | `{"error": {"message": "Email does not exist", "details": {"email": "No account found with the provided email"}}}`                                   |
-| Wrong password   | 400    | `{"error": {"message": "Invalid password", "details": {"password": "The provided password is incorrect for given email."}}}`                         |
-| Account inactive | 400    | `{"error": {"message": "Account is inactive", "details": {"email": "The account associated with this email is inactive. Please contact support."}}}` |
-
----
-
-#### POST `/auth/token/refresh/`
-
-Refresh access token using refresh token.
-
 **Request:**
 
-```json
-{
-	"refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+```````json| Error            | Status | Response                                                                                                                                             |
+
+{| ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+
+  "title": "Updated Title",| Email not found  | 400    | `{"error": {"message": "Email does not exist", "details": {"email": "No account found with the provided email"}}}`                                   |
+
+  "description": "Updated description",| Wrong password   | 400    | `{"error": {"message": "Invalid password", "details": {"password": "The provided password is incorrect for given email."}}}`                         |
+
+  "status": "in_progress"| Account inactive | 400    | `{"error": {"message": "Account is inactive", "details": {"email": "The account associated with this email is inactive. Please contact support."}}}` |
+
 }
-```
 
-**Success Response (200):**
+```---
 
-```json
+
+
+**Note:** Only staff/admin can set status to "resolved".#### POST `/auth/token/refresh/`
+
+
+
+#### Delete IssueRefresh access token using refresh token.
+
+```http
+
+DELETE /api/v1/issues/delete/{id}/**Request:**
+
+Authorization: Bearer <access_token>
+
+``````json
+
 {
-	"access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+
+---	"refresh": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+
 }
-```
 
-**Error Response (401):**
+### Comment Endpoints```
+
+
+
+#### Create Comment**Success Response (200):**
+
+```http
+
+POST /api/v1/comments/new/```json
+
+Authorization: Bearer <access_token>{
+
+```	"access": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+
+}
+
+**Request:**```
 
 ```json
-{
-	"detail": "Token is invalid or expired",
+
+{**Error Response (401):**
+
+  "issue_id": 1,
+
+  "content": "This is a comment on the issue."```json
+
+}{
+
+```	"detail": "Token is invalid or expired",
+
 	"code": "token_not_valid"
-}
-```
 
----
+**Response (201):**}
 
-#### POST `/auth/users/` (Register)
+```json```
 
-Register a new citizen account.
-
-**Request:**
-
-```json
 {
-	"email": "newuser@example.com",
-	"password": "SecurePass123!",
-	"full_name": "Jane Smith",
+
+  "id": 1,---
+
+  "issue": {
+
+    "id": 1,#### POST `/auth/users/` (Register)
+
+    "title": "Pothole on Main Street"
+
+  },Register a new citizen account.
+
+  "user": {
+
+    "id": 1,**Request:**
+
+    "email": "user@example.com"
+
+  },```json
+
+  "content": "This is a comment on the issue.",{
+
+  "created_at": "2024-01-01T12:00:00Z"	"email": "newuser@example.com",
+
+}	"password": "SecurePass123!",
+
+```	"full_name": "Jane Smith",
+
 	"phone_number": "+977-9812345678",
-	"address": "Kathmandu, Nepal"
-}
-```
 
-**Success Response (201):**
+#### List Comments for Issue	"address": "Kathmandu, Nepal"
+
+```http}
+
+GET /api/v1/comments/list/{issue_id}/```
+
+Authorization: Bearer <access_token>
+
+```**Success Response (201):**
+
+
+
+#### Update Comment (Owner Only)```json
+
+```http{
+
+PATCH /api/v1/comments/update/{id}/	"id": 2,
+
+Authorization: Bearer <access_token>	"email": "newuser@example.com",
+
+```	"full_name": "Jane Smith"
+
+}
+
+**Request:**```
 
 ```json
-{
-	"id": 2,
-	"email": "newuser@example.com",
-	"full_name": "Jane Smith"
-}
-```
 
-**Error Responses:**
+{**Error Responses:**
 
-| Error           | Field     | Message                                |
-| --------------- | --------- | -------------------------------------- |
+  "content": "Updated comment content."
+
+}| Error           | Field     | Message                                |
+
+```| --------------- | --------- | -------------------------------------- |
+
 | Duplicate email | email     | "user with this email already exists." |
-| Weak password   | password  | "This password is too common."         |
-| Missing field   | full_name | "This field is required."              |
 
----
+#### Delete Comment| Weak password   | password  | "This password is too common."         |
+
+```http| Missing field   | full_name | "This field is required."              |
+
+DELETE /api/v1/comments/delete/{id}/
+
+Authorization: Bearer <access_token>---
+
+```````
 
 #### POST `/auth/register/resolver/`
 
+**Note:** Only comment owner or admin can delete.
+
 Register as a resolver (requires verification).
 
-**Request:**
+#### Get My Comments
 
-```json
-{
+````http**Request:**
+
+GET /api/v1/comments/mine/
+
+Authorization: Bearer <access_token>```json
+
+```{
+
 	"name": "Ram Kumar",
-	"email": "resolver@municipality.gov.np",
+
+---	"email": "resolver@municipality.gov.np",
+
 	"phone": "+977-9801234567",
-	"password": "SecurePass123!",
+
+### Progress Endpoints (Staff/Admin Only)	"password": "SecurePass123!",
+
 	"confirm_password": "SecurePass123!",
-	"department": "1",
-	"employee_id": "EMP-001",
-	"designation": "Ward Officer"
-}
-```
+
+#### Create Progress Update	"department": "1",
+
+```http	"employee_id": "EMP-001",
+
+POST /api/v1/progress/new/	"designation": "Ward Officer"
+
+Authorization: Bearer <access_token>}
+
+Content-Type: multipart/form-data```
+
+````
 
 **Success Response (201):**
 
-```json
-{
-	"success": true,
-	"message": "Registration successful. Your account is pending verification.",
-	"data": {
-		"user": {
-			"id": 3,
-			"name": "Ram Kumar",
-			"email": "resolver@municipality.gov.np",
-			"role": "resolver"
-		},
-		"verification_status": "pending"
-	}
-}
-```
-
----
-
-#### POST `/auth/users/reset_password/`
-
-Request password reset email.
-
 **Request:**
 
-```json
-{
-	"email": "user@example.com"
-}
-```
+`json`json
 
-**Success Response (204):** No content
+{{
 
----
+"issue_id": 1, "success": true,
 
-### User Endpoints
+"status": "in_progress", "message": "Registration successful. Your account is pending verification.",
 
-#### GET `/users/me/`
+"notes": "Started working on the issue." "data": {
 
-Get current authenticated user's profile.
+} "user": {
+
+````"id": 3,
+
+			"name": "Ram Kumar",
+
+**With images:**			"email": "resolver@municipality.gov.np",
+
+```			"role": "resolver"
+
+issue_id: 1		},
+
+status: in_progress		"verification_status": "pending"
+
+notes: Started working on the issue.	}
+
+images: [file1.jpg, file2.jpg]}
+
+````
+
+**Response (201):**---
+
+````json
+
+{#### POST `/auth/users/reset_password/`
+
+  "id": 1,
+
+  "issue": {Request password reset email.
+
+    "id": 1,
+
+    "title": "Pothole on Main Street"**Request:**
+
+  },
+
+  "status": "in_progress",```json
+
+  "notes": "Started working on the issue.",{
+
+  "updated_at": "2024-01-02T10:00:00Z",	"email": "user@example.com"
+
+  "updated_by": {}
+
+    "id": 2,```
+
+    "email": "staff@example.com"
+
+  },**Success Response (204):** No content
+
+  "images": [
+
+    {---
+
+      "id": 1,
+
+      "image": "/media/progress_images/...",### User Endpoints
+
+      "uploaded_at": "2024-01-02T10:00:00Z"
+
+    }#### GET `/users/me/`
+
+  ]
+
+}Get current authenticated user's profile.
+
+````
 
 **Headers:** `Authorization: Bearer <token>` (Required)
 
+**Note:** Creating a progress update automatically updates the issue's status.
+
 **Success Response (200):**
 
-```json
-{
-	"success": true,
-	"message": "User profile retrieved successfully",
+#### List Progress Updates
+
+`http`json
+
+GET /api/v1/progress/list/{
+
+Authorization: Bearer <access_token> "success": true,
+
+````"message": "User profile retrieved successfully",
+
 	"data": {
-		"id": 1,
-		"email": "user@example.com",
-		"full_name": "John Doe",
+
+**Query Parameters:**		"id": 1,
+
+- `issue_id` - Filter by issue ID		"email": "user@example.com",
+
+- `status` - Filter by status		"full_name": "John Doe",
+
 		"name": "John Doe",
-		"phone_number": "+977-9812345678",
-		"phone": "+977-9812345678",
-		"address": "Kathmandu, Nepal",
-		"ward": "Ward 10",
-		"bio": "Active citizen",
+
+#### Get Progress by Issue		"phone_number": "+977-9812345678",
+
+```http		"phone": "+977-9812345678",
+
+GET /api/v1/progress/issue/{issue_id}/		"address": "Kathmandu, Nepal",
+
+Authorization: Bearer <access_token>		"ward": "Ward 10",
+
+```		"bio": "Active citizen",
+
 		"location": "Kathmandu",
-		"profile_image": "http://localhost:8000/media/avatars/1.jpg",
-		"avatar": "http://localhost:8000/media/avatars/1.jpg",
-		"role": "citizen",
-		"is_active": true,
-		"joined_at": "2024-01-15T10:30:00Z",
+
+#### Update Progress		"profile_image": "http://localhost:8000/media/avatars/1.jpg",
+
+```http		"avatar": "http://localhost:8000/media/avatars/1.jpg",
+
+PATCH /api/v1/progress/update/{id}/		"role": "citizen",
+
+Authorization: Bearer <access_token>		"is_active": true,
+
+```		"joined_at": "2024-01-15T10:30:00Z",
+
 		"stats": {
-			"issues_reported": 12,
-			"issues_resolved": 8,
-			"upvotes_given": 45,
-			"comments_made": 23
-		},
+
+#### Delete Progress			"issues_reported": 12,
+
+```http			"issues_resolved": 8,
+
+DELETE /api/v1/progress/delete/{id}/			"upvotes_given": 45,
+
+Authorization: Bearer <access_token>			"comments_made": 23
+
+```		},
+
 		"badges": [
-			{
+
+---			{
+
 				"id": 1,
-				"name": "First Reporter",
+
+## Response Format				"name": "First Reporter",
+
 				"icon": "🏆",
-				"earned_at": "2024-01-16T00:00:00Z"
-			}
-		]
-	}
-}
-```
+
+### Success Response				"earned_at": "2024-01-16T00:00:00Z"
+
+```json			}
+
+{		]
+
+  "data": { ... },	}
+
+  "message": "Success"}
+
+}```
+
+````
 
 ---
 
-#### PATCH `/users/me/`
+### Error Response
 
-Update current user's profile.
+```json#### PATCH `/users/me/`
 
-**Headers:** `Authorization: Bearer <token>` (Required)
+{
 
-**Request:** (All fields optional)
+"error": "Error message",Update current user's profile.
+
+"details": {
+
+    "field": "Specific error"**Headers:** `Authorization: Bearer <token>` (Required)
+
+}
+
+}**Request:** (All fields optional)
+
+````
 
 ```json
-{
+
+---{
+
 	"full_name": "John Updated",
-	"phone_number": "+977-9812345679",
+
+## Error Handling	"phone_number": "+977-9812345679",
+
 	"address": "Lalitpur, Nepal",
-	"ward": "Ward 5",
+
+### HTTP Status Codes	"ward": "Ward 5",
+
 	"bio": "Passionate about community",
-	"location": "Lalitpur"
-}
-```
 
-**Success Response (200):**
+| Code | Description                  |	"location": "Lalitpur"
+
+| ---- | ---------------------------- |}
+
+| 200  | Success                      |```
+
+| 201  | Created                      |
+
+| 204  | Deleted                      |**Success Response (200):**
+
+| 400  | Bad Request / Validation Error |
+
+| 401  | Unauthorized                 |```json
+
+| 403  | Forbidden                    |{
+
+| 404  | Not Found                    |	"success": true,
+
+| 500  | Server Error                 |	"message": "Profile updated successfully",
+
+	"data": {
+
+### Common Error Responses		/* Updated user object */
+
+	}
+
+**401 Unauthorized:**}
+
+```json```
+
+{
+
+  "detail": "Authentication credentials were not provided."---
+
+}
+
+```#### GET `/users/me/issues/`
+
+
+
+**403 Forbidden:**Get issues reported by current user.
 
 ```json
-{
-	"success": true,
-	"message": "Profile updated successfully",
-	"data": {
-		/* Updated user object */
-	}
-}
-```
 
----
+{**Headers:** `Authorization: Bearer <token>` (Required)
 
-#### GET `/users/me/issues/`
+  "error": "You do not have permission to perform this action."
 
-Get issues reported by current user.
+}**Query Parameters:**
 
-**Headers:** `Authorization: Bearer <token>` (Required)
+```| Parameter | Type | Description |
 
-**Query Parameters:**
-| Parameter | Type | Description |
 |-----------|------|-------------|
-| status | string | Filter by status: `reported`, `acknowledged`, `in-progress`, `resolved` |
 
-**Success Response (200):**
+**400 Validation Error:**| status | string | Filter by status: `reported`, `acknowledged`, `in-progress`, `resolved` |
 
 ```json
-{
-	"success": true,
-	"message": "User issues retrieved successfully",
-	"data": {
-		"results": [
-			/* Array of IssueList objects */
-		],
-		"count": 12
-	}
-}
-```
 
----
+{**Success Response (200):**
+
+  "email": ["user with this email already exists."],
+
+  "password": ["This field is required."]```json
+
+}{
+
+```	"success": true,
+
+	"message": "User issues retrieved successfully",
+
+---	"data": {
+
+		"results": [
+
+## Status Values			/* Array of IssueList objects */
+
+		],
+
+| Status        | Description              |		"count": 12
+
+| ------------- | ------------------------ |	}
+
+| `open`        | Newly created issue      |}
+
+| `in_progress` | Being worked on          |```
+
+| `resolved`    | Issue resolved           |
+
+| `closed`      | Issue closed             |---
+
 
 #### GET `/users/me/bookmarks/`
 
@@ -516,7 +998,7 @@ Get issues bookmarked by current user.
 		"count": 5
 	}
 }
-```
+````
 
 ---
 

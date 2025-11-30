@@ -54,8 +54,8 @@ export default function Sidebar({
 	const { darkMode, toggleDarkMode } = useTheme();
 
 	// Determine if we should show resolver/admin nav based on user role
-	const shouldShowResolverNav = showResolverNav || user?.role === "resolver";
-	const shouldShowAdminNav = showAdminNav || user?.role === "admin";
+	const shouldShowResolverNav = showResolverNav || user?.is_staff;
+	const shouldShowAdminNav = showAdminNav || user?.is_admin;
 
 	const handleLogout = async () => {
 		await logout();

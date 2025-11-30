@@ -26,7 +26,7 @@ export default function AdminDashboard() {
 				router.push("/login");
 				return;
 			}
-			if (user && user.role !== "admin") {
+			if (user && !user.is_admin) {
 				router.push("/feed");
 				return;
 			}
@@ -36,7 +36,7 @@ export default function AdminDashboard() {
 	// Fetch admin dashboard data
 	useEffect(() => {
 		const fetchDashboardData = async () => {
-			if (!user || user.role !== "admin") return;
+			if (!user || !user.is_admin) return;
 
 			setLoading(true);
 			try {
@@ -74,7 +74,7 @@ export default function AdminDashboard() {
 			}
 		};
 
-		if (user?.role === "admin") {
+		if (user?.is_admin) {
 			fetchDashboardData();
 		}
 	}, [user]);

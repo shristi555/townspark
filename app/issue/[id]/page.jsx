@@ -60,7 +60,7 @@ export default function IssueDetailPage() {
 		}
 	}, [issue]);
 
-	const isResolver = user?.role === "resolver" || user?.role === "admin";
+	const isResolver = user?.is_staff || user?.is_admin;
 
 	const formatDate = (dateString) => {
 		return new Date(dateString).toLocaleDateString("en-US", {

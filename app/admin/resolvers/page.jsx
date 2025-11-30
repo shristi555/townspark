@@ -41,7 +41,7 @@ export default function AdminResolversPage() {
 				router.push("/login");
 				return;
 			}
-			if (authUser && authUser.role !== "admin") {
+			if (authUser && !authUser.is_admin) {
 				router.push("/feed");
 				return;
 			}
@@ -50,7 +50,7 @@ export default function AdminResolversPage() {
 
 	// Fetch resolvers data
 	const fetchResolvers = useCallback(async () => {
-		if (!authUser || authUser.role !== "admin") return;
+		if (!authUser || !authUser.is_admin) return;
 
 		setLoading(true);
 		try {
@@ -76,7 +76,7 @@ export default function AdminResolversPage() {
 	}, [authUser]);
 
 	useEffect(() => {
-		if (authUser?.role === "admin") {
+		if (authUser?.is_admin) {
 			fetchResolvers();
 		}
 	}, [authUser, fetchResolvers]);

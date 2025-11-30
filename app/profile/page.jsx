@@ -114,8 +114,8 @@ export default function ProfilePage() {
 			<Sidebar
 				isOpen={sidebarOpen}
 				onClose={() => setSidebarOpen(false)}
-				showResolverNav={user?.role === "resolver"}
-				showAdminNav={user?.role === "admin"}
+				showResolverNav={user?.is_staff}
+				showAdminNav={user?.is_admin}
 			/>
 
 			<div className='md:ml-72'>
@@ -212,16 +212,15 @@ export default function ProfilePage() {
 										year: "numeric",
 									})}
 								</div>
-								{user.role !== "citizen" && (
+								{(user.is_admin || user.is_staff) && (
 									<Badge
 										status={
-											user.role === "resolver"
+											user.is_staff && !user.is_admin
 												? "acknowledged"
 												: "resolved"
 										}
 									>
-										{user.role.charAt(0).toUpperCase() +
-											user.role.slice(1)}
+										{user.is_admin ? "Admin" : "Staff"}
 									</Badge>
 								)}
 							</div>

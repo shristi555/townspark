@@ -21,25 +21,11 @@ export {
 	httpClient,
 	ApiResponse,
 	TokenManager,
-	BaseService,
-	createService,
-
-	// Models
-	BaseModel,
-	UserModel,
-	IssueModel,
-	CommentModel,
-	NotificationModel,
-	PaginatedResult,
 
 	// Domain Services
 	AuthService,
 	UserService,
 	IssueService,
 	CommentService,
-	NotificationService,
-	ResolverService,
-	AdminService,
-	CoreService,
-	AnalyticsService,
+	ProgressService,
 } from "../modules";

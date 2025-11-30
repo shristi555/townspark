@@ -24,7 +24,7 @@ export default function AdminAnalyticsPage() {
 				router.push("/login");
 				return;
 			}
-			if (user && user.role !== "admin") {
+			if (user && !user.is_admin) {
 				router.push("/feed");
 				return;
 			}
@@ -34,7 +34,7 @@ export default function AdminAnalyticsPage() {
 	// Fetch analytics data
 	useEffect(() => {
 		const fetchAnalytics = async () => {
-			if (!user || user.role !== "admin") return;
+			if (!user || !user.is_admin) return;
 
 			setLoading(true);
 			try {
@@ -49,7 +49,7 @@ export default function AdminAnalyticsPage() {
 			}
 		};
 
-		if (user?.role === "admin") {
+		if (user?.is_admin) {
 			fetchAnalytics();
 		}
 	}, [user, timeRange]);

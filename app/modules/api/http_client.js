@@ -131,16 +131,23 @@ function getErrorCodeFromStatus(status) {
 function logError(context, errorInfo) {
 	const timestamp = new Date().toISOString();
 	console.group(`🔴 API Error [${timestamp}]`);
-	console.error("Context:", context);
-	console.error("Error Code:", errorInfo.code);
-	console.error("User Message:", errorInfo.userMessage);
-	console.error("Dev Message:", errorInfo.devMessage);
-	if (errorInfo.endpoint) console.error("Endpoint:", errorInfo.endpoint);
-	if (errorInfo.method) console.error("Method:", errorInfo.method);
-	if (errorInfo.status) console.error("Status Code:", errorInfo.status);
-	if (errorInfo.rawError) console.error("Raw Error:", errorInfo.rawError);
-	if (errorInfo.responseData)
-		console.error("Response Data:", errorInfo.responseData);
+	const parts = [
+		`Context: ${context}`,
+		`Error Code: ${errorInfo.code}`,
+		`User Message: ${errorInfo.userMessage}`,
+		`Dev Message: ${errorInfo.devMessage}`,
+		errorInfo.endpoint ? `Endpoint: ${errorInfo.endpoint}` : null,
+		errorInfo.method ? `Method: ${errorInfo.method}` : null,
+		errorInfo.status ? `Status Code: ${errorInfo.status}` : null,
+		errorInfo.rawError
+			? `Raw Error: ${JSON.stringify(errorInfo.rawError)}`
+			: null,
+		errorInfo.responseData
+			? `Response Data: ${JSON.stringify(errorInfo.responseData)}`
+			: null,
+	].filter(Boolean);
+
+	console.error(parts.join("\n\n"));
 	console.groupEnd();
 }
 
@@ -387,7 +394,7 @@ class HttpClient {
 			throw new Error("No refresh token available");
 		}
 
-		const response = await fetch(`${this.baseUrl}/auth/token/refresh/`, {
+		const response = await fetch(`${this.baseUrl}/auth/jwt/refresh/`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -402,7 +409,8 @@ class HttpClient {
 		}
 
 		const data = await response.json();
-		TokenManager.setTokens(data.access);
+		// Backend rotates refresh tokens, so update both
+		TokenManager.setTokens(data.access, data.refresh);
 		return data.access;
 	}
 
