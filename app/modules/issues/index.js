@@ -8,12 +8,63 @@
  * - GET /issues/detail/{id}/ - Get issue details
  * - PUT/PATCH /issues/update/{id}/ - Update issue
  * - DELETE /issues/delete/{id}/ - Delete issue
+ * - GET /issues/categories/ - Get all categories
+ * - GET /issues/category/{category}/ - Get issues by category
  *
  * Status Values: open, in_progress, resolved, closed
  */
 
-import httpClient from "../api/http_client";
+import httpClient, { ApiResponse } from "../api/http_client";
 import { API_ROUTES } from "../api/config";
+
+// Cache key for localStorage
+const CATEGORIES_CACHE_KEY = "townspark_categories";
+const CATEGORIES_CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+
+/**
+ * Get cached categories from localStorage
+ * @returns {Array|null} Cached categories or null if expired/missing
+ */
+function getCachedCategories() {
+	if (typeof window === "undefined") return null;
+
+	try {
+		const cached = localStorage.getItem(CATEGORIES_CACHE_KEY);
+		if (!cached) return null;
+
+		const { data, timestamp } = JSON.parse(cached);
+		const isExpired = Date.now() - timestamp > CATEGORIES_CACHE_EXPIRY;
+
+		if (isExpired) {
+			localStorage.removeItem(CATEGORIES_CACHE_KEY);
+			return null;
+		}
+
+		return data;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Save categories to localStorage cache
+ * @param {Array} categories
+ */
+function setCachedCategories(categories) {
+	if (typeof window === "undefined") return;
+
+	try {
+		localStorage.setItem(
+			CATEGORIES_CACHE_KEY,
+			JSON.stringify({
+				data: categories,
+				timestamp: Date.now(),
+			})
+		);
+	} catch {
+		// Ignore storage errors
+	}
+}
 
 export const IssueService = {
 	/**
@@ -97,6 +148,85 @@ export const IssueService = {
 		return httpClient.delete(API_ROUTES.issues.delete(issueId), {
 			auth: true,
 		});
+	},
+
+	/**
+	 * Get all issue categories
+	 * No authentication required
+	 * Results are cached in localStorage for 24 hours
+	 * @param {boolean} [forceRefresh=false] - Force refresh from server
+	 * @returns {Promise<ApiResponse>}
+	 */
+	async getCategories(forceRefresh = false) {
+		// Check cache first
+		if (!forceRefresh) {
+			const cached = getCachedCategories();
+			if (cached) {
+				return ApiResponse.success(cached);
+			}
+		}
+
+		// Fetch from server
+		const response = await httpClient.get(API_ROUTES.issues.categories, {
+			auth: false,
+		});
+
+		// Cache successful response
+		if (response.success && response.data) {
+			setCachedCategories(response.data);
+		}
+
+		return response;
+	},
+
+	/**
+	 * Get issues by category
+	 * Regular users see only their own issues in the category
+	 * Staff/Admin users see all issues in the category
+	 * @param {string} category - Category value (e.g., "road_damage")
+	 * @param {Object} [params] - Query parameters
+	 * @param {string} [params.status] - Filter by status
+	 * @returns {Promise<ApiResponse>}
+	 */
+	async getIssuesByCategory(category, params = {}) {
+		const queryParams = {};
+		if (params.status) queryParams.status = params.status;
+
+		return httpClient.get(API_ROUTES.issues.byCategory(category), {
+			auth: true,
+			params: queryParams,
+		});
+	},
+
+	/**
+	 * Get category label by value
+	 * Uses cached categories if available
+	 * @param {string} categoryValue - Category value (e.g., "road_damage")
+	 * @returns {string} Category label or the value itself if not found
+	 */
+	getCategoryLabel(categoryValue) {
+		if (!categoryValue) return "Uncategorized";
+
+		const cached = getCachedCategories();
+		if (cached) {
+			const category = cached.find((c) => c.value === categoryValue);
+			if (category) return category.label;
+		}
+
+		// Fallback: convert snake_case to Title Case
+		return categoryValue
+			.split("_")
+			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+			.join(" ");
+	},
+
+	/**
+	 * Clear the categories cache
+	 */
+	clearCategoriesCache() {
+		if (typeof window !== "undefined") {
+			localStorage.removeItem(CATEGORIES_CACHE_KEY);
+		}
 	},
 };
 

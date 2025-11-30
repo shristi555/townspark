@@ -1,0 +1,809 @@
+{
+	"info": {
+		"_postman_id": "townspark-api-collection",
+		"name": "TownSpark API",
+		"description": "Complete API collection for TownSpark Backend with automatic token management.\n\n## Setup Instructions\n1. Import this collection into Postman\n2. Set the `base_url` variable to your API server (e.g., http://localhost:8000/api/v1)\n3. Run the \"Login\" request first to get tokens\n4. All subsequent requests will automatically use the stored tokens\n\n## Token Management\n- Access and refresh tokens are automatically stored after login\n- All authenticated requests use the access token automatically\n- Use \"Refresh Token\" when access token expires\n- New tokens are automatically saved after refresh",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script to ensure tokens are available",
+					"const accessToken = pm.collectionVariables.get('access_token');",
+					"if (accessToken) {",
+					"    pm.request.headers.add({",
+					"        key: 'Authorization',",
+					"        value: 'Bearer ' + accessToken",
+					"    });",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"description": "User authentication endpoints including signup, login, and token management",
+			"item": [
+				{
+					"name": "Signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    pm.test('User created successfully', function() {",
+									"        const response = pm.response.json();",
+									"        pm.expect(response).to.have.property('id');",
+									"        pm.expect(response).to.have.property('email');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test.user@example.com\",\n    \"password\": \"securepassword123\",\n    \"full_name\": \"Test User\",\n    \"phone_number\": \"+9700123456\",\n    \"address\": \"123 Test Street\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/signup/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "signup", ""]
+						},
+						"description": "Register a new user account. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    ",
+									"    // Store tokens in collection variables",
+									"    if (response.tokens) {",
+									"        pm.collectionVariables.set('access_token', response.tokens.access);",
+									"        pm.collectionVariables.set('refresh_token', response.tokens.refresh);",
+									"        ",
+									"        console.log('✅ Tokens saved successfully!');",
+									"        console.log('Access Token (first 50 chars):', response.tokens.access.substring(0, 50) + '...');",
+									"    }",
+									"    ",
+									"    pm.test('Login successful - tokens stored', function() {",
+									"        pm.expect(response.tokens).to.have.property('access');",
+									"        pm.expect(response.tokens).to.have.property('refresh');",
+									"        pm.expect(response.user).to.have.property('id');",
+									"    });",
+									"} else {",
+									"    console.log('❌ Login failed:', pm.response.text());",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test.user@example.com\",\n    \"password\": \"securepassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login", ""]
+						},
+						"description": "Login with email and password. Tokens are automatically saved to collection variables."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    ",
+									"    // Update stored tokens",
+									"    if (response.access) {",
+									"        pm.collectionVariables.set('access_token', response.access);",
+									"        console.log('✅ Access token refreshed!');",
+									"    }",
+									"    ",
+									"    // Some implementations return a new refresh token too",
+									"    if (response.refresh) {",
+									"        pm.collectionVariables.set('refresh_token', response.refresh);",
+									"        console.log('✅ Refresh token also updated!');",
+									"    }",
+									"    ",
+									"    pm.test('Token refreshed successfully', function() {",
+									"        pm.expect(response).to.have.property('access');",
+									"    });",
+									"} else {",
+									"    console.log('❌ Token refresh failed - you may need to login again');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// This request uses the refresh token, not access token",
+									"// Clear any existing auth header"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/jwt/refresh/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "jwt", "refresh", ""]
+						},
+						"description": "Refresh the access token using the stored refresh token. New tokens are automatically saved."
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Token",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{access_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/jwt/verify/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "jwt", "verify", ""]
+						},
+						"description": "Verify if the current access token is valid."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User Profile",
+			"description": "User profile management endpoints",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/users/me/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "users", "me", ""]
+						},
+						"description": "Get the current authenticated user's profile."
+					},
+					"response": []
+				},
+				{
+					"name": "Update My Profile (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"full_name\": \"Updated Name\",\n    \"phone_number\": \"+9700999888\",\n    \"address\": \"Updated Address\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/users/me/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "users", "me", ""]
+						},
+						"description": "Partially update the current user's profile."
+					},
+					"response": []
+				},
+				{
+					"name": "Update My Profile (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"full_name\": \"Full Name\",\n    \"phone_number\": \"+9700123456\",\n    \"address\": \"Full Address\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/users/me/",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "users", "me", ""]
+						},
+						"description": "Fully update the current user's profile (all fields required)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Issues",
+			"description": "Issue management endpoints for creating, viewing, updating, and deleting issues",
+			"item": [
+				{
+					"name": "Create Issue",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('last_issue_id', response.id);",
+									"    console.log('✅ Issue created with ID:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Pothole on Main Street\",\n    \"description\": \"There is a large pothole on Main Street near the intersection with Oak Avenue. It's causing damage to vehicles.\",\n    \"category\": \"road_damage\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/issues/new/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "new", ""]
+						},
+						"description": "Create a new issue. The issue ID is automatically saved for use in other requests."
+					},
+					"response": []
+				},
+				{
+					"name": "List All Issues",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/issues/list/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "list", ""]
+						},
+						"description": "List all issues. Regular users see only their own issues; staff/admin see all."
+					},
+					"response": []
+				},
+				{
+					"name": "List Issues by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/issues/list/?status=open",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "list", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "open",
+									"description": "Filter: open, in_progress, resolved, closed"
+								}
+							]
+						},
+						"description": "List issues filtered by status."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issue by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/issues/detail/1/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "detail", "1", ""]
+						},
+						"description": "Get details of a specific issue by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Issue (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"in_progress\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/issues/update/1/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "update", "1", ""]
+						},
+						"description": "Partially update an issue. Status changes to 'resolved' require staff/admin."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Issue (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Title\",\n    \"description\": \"Updated description with more details.\",\n    \"status\": \"in_progress\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/issues/update/1/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "update", "1", ""]
+						},
+						"description": "Fully update an issue (all fields required)."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Issue",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/issues/delete/1/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "delete", "1", ""]
+						},
+						"description": "Delete an issue. Users can only delete their own issues; staff/admin can delete any."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Categories",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/issues/categories/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "categories", ""]
+						},
+						"description": "Get all available issue categories. No authentication required."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issues by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/issues/category/road_damage/",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "category", "road_damage", ""]
+						},
+						"description": "Get all issues in a specific category."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Issues by Category with Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/issues/category/road_damage/?status=open",
+							"host": ["{{base_url}}"],
+							"path": ["issues", "category", "road_damage", ""],
+							"query": [
+								{
+									"key": "status",
+									"value": "open"
+								}
+							]
+						},
+						"description": "Get issues in a category filtered by status."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comments",
+			"description": "Comment management endpoints for issues",
+			"item": [
+				{
+					"name": "Create Comment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('last_comment_id', response.id);",
+									"    console.log('✅ Comment created with ID:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"issue_id\": 1,\n    \"content\": \"This is a sample comment on the issue.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/comments/new/",
+							"host": ["{{base_url}}"],
+							"path": ["comments", "new", ""]
+						},
+						"description": "Create a new comment on an issue."
+					},
+					"response": []
+				},
+				{
+					"name": "List Comments for Issue",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/list/1/",
+							"host": ["{{base_url}}"],
+							"path": ["comments", "list", "1", ""]
+						},
+						"description": "Get all comments for a specific issue."
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Comments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/mine/",
+							"host": ["{{base_url}}"],
+							"path": ["comments", "mine", ""]
+						},
+						"description": "Get all comments made by the current user."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Comments by User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/user/1/",
+							"host": ["{{base_url}}"],
+							"path": ["comments", "user", "1", ""]
+						},
+						"description": "Get all comments made by a specific user (admin only)."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Comment",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Updated comment content.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/comments/update/1/",
+							"host": ["{{base_url}}"],
+							"path": ["comments", "update", "1", ""]
+						},
+						"description": "Update a comment. Only the comment owner can update."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Comment",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/comments/delete/1/",
+							"host": ["{{base_url}}"],
+							"path": ["comments", "delete", "1", ""]
+						},
+						"description": "Delete a comment. Only owner or admin can delete."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Progress (Staff Only)",
+			"description": "Progress update endpoints for staff to track issue resolution",
+			"item": [
+				{
+					"name": "Create Progress Update",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('last_progress_id', response.id);",
+									"    console.log('✅ Progress update created with ID:', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"issue_id\": 1,\n    \"status\": \"in_progress\",\n    \"notes\": \"Started working on this issue. Equipment dispatched.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/progress/new/",
+							"host": ["{{base_url}}"],
+							"path": ["progress", "new", ""]
+						},
+						"description": "Create a progress update for an issue. Staff/Admin only."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Progress with Images",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "issue_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "in_progress",
+									"type": "text"
+								},
+								{
+									"key": "notes",
+									"value": "Progress update with images attached.",
+									"type": "text"
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": [],
+									"description": "Select image files"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/progress/new/",
+							"host": ["{{base_url}}"],
+							"path": ["progress", "new", ""]
+						},
+						"description": "Create a progress update with image attachments."
+					},
+					"response": []
+				},
+				{
+					"name": "List All Progress Updates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/progress/list/",
+							"host": ["{{base_url}}"],
+							"path": ["progress", "list", ""]
+						},
+						"description": "List all progress updates. Regular users see only their issues' progress."
+					},
+					"response": []
+				},
+				{
+					"name": "List Progress by Issue",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/progress/issue/1/",
+							"host": ["{{base_url}}"],
+							"path": ["progress", "issue", "1", ""]
+						},
+						"description": "Get all progress updates for a specific issue."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Progress by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/progress/detail/1/",
+							"host": ["{{base_url}}"],
+							"path": ["progress", "detail", "1", ""]
+						},
+						"description": "Get a specific progress update by ID."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Progress",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"resolved\",\n    \"notes\": \"Issue has been resolved successfully.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/progress/update/1/",
+							"host": ["{{base_url}}"],
+							"path": ["progress", "update", "1", ""]
+						},
+						"description": "Update a progress entry. Staff/Admin only."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Progress",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/progress/delete/1/",
+							"host": ["{{base_url}}"],
+							"path": ["progress", "delete", "1", ""]
+						},
+						"description": "Delete a progress update. Staff/Admin only."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

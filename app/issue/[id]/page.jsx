@@ -20,6 +20,7 @@ import {
 import { useAuth } from "../../contexts/auth_context";
 import { useIssue, useComments, useIssueMutations } from "../../hooks";
 import { ResolverService } from "../../modules/resolver";
+import { IssueService } from "../../modules/issues";
 
 export default function IssueDetailPage() {
 	const params = useParams();
@@ -221,7 +222,10 @@ export default function IssueDetailPage() {
 								<div className='flex items-center gap-2 flex-wrap mb-3'>
 									{issue.category && (
 										<span className='text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full'>
-											{issue.category}
+											{issue.category_display ||
+												IssueService.getCategoryLabel(
+													issue.category
+												)}
 										</span>
 									)}
 									{issue.urgency &&
@@ -416,7 +420,10 @@ export default function IssueDetailPage() {
 										Category
 									</span>
 									<span className='text-sm font-medium text-text-primary-light dark:text-text-primary-dark'>
-										{issue.category || "Uncategorized"}
+										{issue.category_display ||
+											IssueService.getCategoryLabel(
+												issue.category
+											)}
 									</span>
 								</div>
 								<div className='flex items-center justify-between'>
@@ -514,10 +521,10 @@ function UpdateStatusModal({
 					value={status}
 					onChange={(e) => setStatus(e.target.value)}
 					options={[
-						{ value: "reported", label: "Reported" },
-						{ value: "acknowledged", label: "Acknowledged" },
-						{ value: "in-progress", label: "In Progress" },
+						{ value: "open", label: "Open" },
+						{ value: "in_progress", label: "In Progress" },
 						{ value: "resolved", label: "Resolved" },
+						{ value: "closed", label: "Closed" },
 					]}
 					fullWidth
 				/>

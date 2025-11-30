@@ -41,6 +41,8 @@ export const API_ROUTES = {
 		detail: (id) => `/issues/detail/${id}/`,
 		update: (id) => `/issues/update/${id}/`,
 		delete: (id) => `/issues/delete/${id}/`,
+		categories: "/issues/categories/",
+		byCategory: (category) => `/issues/category/${category}/`,
 		// Convenience aliases
 		byId: (id) => `/issues/detail/${id}/`,
 	},
