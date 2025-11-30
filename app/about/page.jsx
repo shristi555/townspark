@@ -94,7 +94,7 @@ export default function AboutPage() {
 	return (
 		<div className='relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden bg-background-light dark:bg-background-dark'>
 			{/* TopAppBar */}
-			<div className='sticky top-0 z-10 flex items-center bg-background-dark/80 p-4 pb-2 backdrop-blur-sm justify-between'>
+			<div className='sticky top-0 z-10 flex items-center bg-background-dark/80 p-4 pb-2 backdrop-blur-sm justify-between sticky-top-app-bar'>
 				<button
 					onClick={handleBack}
 					className='text-white flex size-12 shrink-0 items-center cursor-pointer hover:opacity-80 transition-opacity'
@@ -104,7 +104,7 @@ export default function AboutPage() {
 					</span>
 				</button>
 				<h1 className='text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center'>
-					Our Impact
+					About TownSpark
 				</h1>
 				<div className='flex w-12 items-center justify-end'>
 					<button
