@@ -372,10 +372,16 @@ export default function ReportIssuePage() {
 							value={formData.category}
 							onChange={handleChange}
 							error={errors.category}
-							options={(categories || []).map((c) => ({
-								value: c.id || c.slug || c.name,
-								label: c.name,
-							}))}
+							options={(categories || []).map((c) => {
+								// Handle both string and object formats
+								if (typeof c === "string") {
+									return { value: c, label: c };
+								}
+								return {
+									value: c.id || c.slug || c.name,
+									label: c.name || c.label || c.id,
+								};
+							})}
 							loading={categoriesLoading}
 							fullWidth
 						/>
@@ -424,10 +430,16 @@ export default function ReportIssuePage() {
 						placeholder='Select area if known'
 						value={formData.area}
 						onChange={handleChange}
-						options={(areas || []).map((a) => ({
-							value: a.id || a.slug || a.name,
-							label: a.name,
-						}))}
+						options={(areas || []).map((a) => {
+							// Handle both string and object formats
+							if (typeof a === "string") {
+								return { value: a, label: a };
+							}
+							return {
+								value: a.id || a.slug || a.name,
+								label: a.name || a.label || a.id,
+							};
+						})}
 						loading={areasLoading}
 						fullWidth
 					/>

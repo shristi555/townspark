@@ -51,14 +51,32 @@ const Select = forwardRef(
 						<option value='' disabled>
 							{loading ? "Loading..." : placeholder}
 						</option>
-						{options.map((option) => (
-							<option
-								key={option.value || option.id || option}
-								value={option.value || option.id || option}
-							>
-								{option.label || option.name || option}
-							</option>
-						))}
+						{options.map((option, index) => {
+							const value = option.value ?? option.id ?? option;
+							const stringValue =
+								typeof value === "object"
+									? JSON.stringify(value)
+									: String(value);
+
+							// Get display label, ensuring it's always a string
+							let displayLabel =
+								option.label ?? option.name ?? option;
+							if (typeof displayLabel === "object") {
+								displayLabel =
+									displayLabel.label ??
+									displayLabel.name ??
+									JSON.stringify(displayLabel);
+							}
+
+							return (
+								<option
+									key={`${stringValue}-${index}`}
+									value={stringValue}
+								>
+									{String(displayLabel)}
+								</option>
+							);
+						})}
 					</select>
 					<div className='absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary-light dark:text-text-secondary-dark'>
 						<span className='material-symbols-outlined'>
