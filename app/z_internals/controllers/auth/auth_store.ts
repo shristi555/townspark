@@ -7,11 +7,11 @@ import {
 import { immer } from "zustand/middleware/immer";
 import { useRouter } from "next/navigation";
 
-import { AuthService } from "../services/auth/auth_service";
-import { RegisterModel } from "../services/auth/register_model";
-import { ClientTokenStorage } from "../services/auth/client_token_storage";
-import { BackendResponse } from "../services/backend_response";
-import { UserInfo } from "../models/user_info";
+import { AuthService } from "../../services/auth/auth_service";
+import { RegisterModel } from "../../services/auth/register_model";
+import { ClientTokenStorage } from "../../services/auth/client_token_storage";
+import { BackendResponse } from "../../services/backend_response";
+import { UserInfo } from "../../models/user_info";
 
 // ============ Types ============
 

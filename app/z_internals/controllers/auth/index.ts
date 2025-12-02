@@ -31,6 +31,7 @@ export {
 	isAuthCheckingAtom,
 	userRoleAtom,
 	isAdminAtom,
+	isStaffAtom,
 	hasProfileImageAtom,
 	// Field error atoms
 	emailErrorAtom,
@@ -60,4 +61,4 @@ export {
 export { AuthProvider, AuthGuard, GuestGuard } from "./auth_provider";
 
 // Re-export models
-export { UserInfo, type IUserInfo } from "../models/user_info";
+export { UserInfo, type IUserInfo } from "../../models/user_info";

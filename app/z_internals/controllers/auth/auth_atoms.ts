@@ -79,8 +79,16 @@ export const userRoleAtom = atom((get) => {
  * Check if user is admin
  */
 export const isAdminAtom = atom((get) => {
-	const role = get(userRoleAtom);
-	return role === "admin";
+	const userInfo = get(userInfoAtom);
+	return userInfo?.isAdmin ?? false;
+});
+
+/**
+ * Check if user is staff
+ */
+export const isStaffAtom = atom((get) => {
+	const userInfo = get(userInfoAtom);
+	return userInfo?.isStaff ?? false;
 });
 
 /**
@@ -88,7 +96,7 @@ export const isAdminAtom = atom((get) => {
  */
 export const hasProfileImageAtom = atom((get) => {
 	const userInfo = get(userInfoAtom);
-	return !!userInfo?.profileImage;
+	return userInfo?.hasProfileImage ?? false;
 });
 
 // ============ Field Error Atoms Factory ============
