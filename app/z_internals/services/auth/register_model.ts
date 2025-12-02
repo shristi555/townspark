@@ -122,3 +122,6 @@ class RegisterModel {
 		return this.profileImage ? this.toFormData() : this.toJson();
 	}
 }
+
+export { RegisterModel };
+export default RegisterModel;

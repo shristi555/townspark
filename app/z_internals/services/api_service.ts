@@ -1,8 +1,8 @@
 // Creates a instance of axios and sets up interceptors
-import { TokenStorage } from "@/app/services/auth/auth_service";
-import BackendResponse from "@/app/services/backend_response";
+import { ClientTokenStorage } from "./auth/client_token_storage";
+import { BackendResponse } from "./backend_response";
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
 
 /*
 Each of the response is 100% guranteeed to be in a consistent format of json.
@@ -46,8 +46,7 @@ class ApiService {
 
 	get apiAccessToken(): string | null {
 		try {
-			// Replace with your auth token retrieval logic
-			return TokenStorage.getAccessToken();
+			return ClientTokenStorage.getAccessToken();
 		} catch {
 			return null;
 		}

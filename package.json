@@ -11,9 +11,12 @@
 	},
 	"dependencies": {
 		"axios": "^1.13.2",
+		"immer": "^11.0.1",
+		"jotai": "^2.15.2",
 		"next": "16.0.3",
 		"react": "19.2.0",
-		"react-dom": "19.2.0"
+		"react-dom": "19.2.0",
+		"zustand": "^5.0.9"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.2.0",
