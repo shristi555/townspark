@@ -1,5 +1,22 @@
 import { AxiosResponse } from "axios";
 
+/*
+Each of the response is 100% guranteeed to be in a consistent format of json.
+
+repsonse model of backend:
+{
+"success": boolean,
+"data": any, // present if success is true
+"error": any, // present if success is false
+}
+
+success is the main indicator of whether the request was successful or not.
+
+if success is true, then data is present and error is null
+if success is false, then data is null and error is present
+
+sometimes if partial success is possible, both data and error can be present. but the success field will remain the true beacuse the main operation was successful.
+*/
 class BackendResponse {
 	/** Indicates if the request was successful */
 	readonly success: boolean;

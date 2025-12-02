@@ -1,11 +1,29 @@
 // Creates a instance of axios and sets up interceptors
+import { TokenStorage } from "@/app/services/auth/auth_service";
 import BackendResponse from "@/app/services/backend_response";
 
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
+/*
+Each of the response is 100% guranteeed to be in a consistent format of json.
+
+repsonse model of backend:
+{
+"success": boolean,
+"data": any, // present if success is true
+"error": any, // present if success is false
+}
+
+success is the main indicator of whether the request was successful or not.
+
+if success is true, then data is present and error is null
+if success is false, then data is null and error is present
+
+sometimes if partial success is possible, both data and error can be present. but the success field will remain the true beacuse the main operation was successful.
+*/
 class ApiService {
 	private axiosInstance: AxiosInstance;
-	private static instance: ApiService;
+	public static instance: ApiService;
 
 	// Singleton pattern to ensure a single instance
 	static getInstance(): ApiService {
@@ -29,7 +47,7 @@ class ApiService {
 	get apiAccessToken(): string | null {
 		try {
 			// Replace with your auth token retrieval logic
-			return localStorage.getItem("access_token");
+			return TokenStorage.getAccessToken();
 		} catch {
 			return null;
 		}
@@ -37,45 +55,60 @@ class ApiService {
 
 	async sendGetRequest(
 		endpoint: string,
-		params?: Record<string, any>,
-		auth: boolean = false
+		options: {
+			data?: Record<string, any>;
+			auth?: boolean;
+			headers?: Record<string, string>;
+		} = {}
 	): Promise<BackendResponse> {
-		return this.sendRequest("GET", endpoint, { params, auth });
+		return this.sendRequest("GET", endpoint, options);
 	}
 
 	async sendPostRequest(
 		endpoint: string,
-		data?: Record<string, any>,
-		auth: boolean = false,
-		files?: Record<string, File | string>
+		options: {
+			data?: Record<string, any>;
+			auth?: boolean;
+			files?: Record<string, File> | null;
+			headers?: Record<string, string>;
+		} = {}
 	): Promise<BackendResponse> {
-		return this.sendRequest("POST", endpoint, { data, auth, files });
+		return this.sendRequest("POST", endpoint, options);
 	}
 
 	async sendPutRequest(
 		endpoint: string,
-		data?: Record<string, any>,
-		auth: boolean = false,
-		files?: Record<string, File | string>
+		options: {
+			data?: Record<string, any>;
+			auth?: boolean;
+			files?: Record<string, File | string>;
+			headers?: Record<string, string>;
+		} = {}
 	): Promise<BackendResponse> {
-		return this.sendRequest("PUT", endpoint, { data, auth, files });
+		return this.sendRequest("PUT", endpoint, options);
 	}
 
 	async sendDeleteRequest(
 		endpoint: string,
-		data?: Record<string, any>,
-		auth: boolean = false
+		options: {
+			data?: Record<string, any>;
+			auth?: boolean;
+			headers?: Record<string, string>;
+		} = {}
 	): Promise<BackendResponse> {
-		return this.sendRequest("DELETE", endpoint, { data, auth });
+		return this.sendRequest("DELETE", endpoint, options);
 	}
 
 	async sendPatchRequest(
 		endpoint: string,
-		data?: Record<string, any>,
-		auth: boolean = false,
-		files?: Record<string, File | string>
+		options: {
+			data?: Record<string, any>;
+			auth?: boolean;
+			files?: Record<string, File | string>;
+			headers?: Record<string, string>;
+		} = {}
 	): Promise<BackendResponse> {
-		return this.sendRequest("PATCH", endpoint, { data, auth, files });
+		return this.sendRequest("PATCH", endpoint, options);
 	}
 
 	async sendRequest(
@@ -83,12 +116,17 @@ class ApiService {
 		endpoint: string,
 		options: {
 			data?: Record<string, any>;
-			params?: Record<string, any>;
 			auth?: boolean;
-			files?: Record<string, File | string>;
+			files?: Record<string, File | string> | null;
+			headers?: Record<string, string>;
 		} = {}
 	): Promise<BackendResponse> {
-		const { data, params, auth = false, files } = options;
+		const {
+			data = {},
+			auth = false,
+			files,
+			headers: customHeaders,
+		} = options;
 
 		try {
 			const headers: Record<string, string> = {};
@@ -98,22 +136,29 @@ class ApiService {
 			}
 
 			const hasFiles = files && Object.keys(files).length > 0;
+			if (method.toUpperCase() === "GET" && hasFiles) {
+				return new BackendResponse({
+					success: false,
+					error: {
+						message: "Files are not supported in GET requests",
+					},
+				});
+			}
+
 			let requestData: any;
 
 			if (hasFiles) {
 				const formData = new FormData();
 
 				// Add regular fields
-				if (data) {
-					Object.entries(data).forEach(([key, value]) => {
-						if (value != null) {
-							formData.append(key, String(value));
-						}
-					});
-				}
+				Object.entries(data).forEach(([key, value]) => {
+					if (value != null) {
+						formData.append(key, String(value));
+					}
+				});
 
 				// Add files
-				for (const [key, value] of Object.entries(files)) {
+				for (const [key, value] of Object.entries(files!)) {
 					if (value instanceof File) {
 						formData.append(key, value, value.name);
 					} else if (typeof value === "string") {
@@ -131,12 +176,17 @@ class ApiService {
 				headers["Content-Type"] = "application/json";
 			}
 
+			// Merge custom headers
+			if (customHeaders) {
+				Object.assign(headers, customHeaders);
+			}
+
 			const config: AxiosRequestConfig = {
 				method: method.toUpperCase(),
 				url: endpoint,
 				headers,
 				...(method.toUpperCase() === "GET"
-					? { params: params || data }
+					? { params: data }
 					: { data: requestData }),
 			};
 
