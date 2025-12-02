@@ -118,149 +118,149 @@ function RegisterForm() {
 	};
 
 	return (
-		<div className="min-h-screen flex bg-background-light dark:bg-background-dark">
+		<div className='min-h-screen flex bg-background-light dark:bg-background-dark'>
 			{/* Left Panel - Image */}
-			<div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-				<div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-blue-600" />
-				<div className="absolute top-20 right-10 size-64 bg-white/10 rounded-full blur-3xl" />
-				<div className="absolute bottom-20 left-10 size-64 bg-blue-400/20 rounded-full blur-3xl" />
+			<div className='hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden'>
+				<div className='absolute inset-0 bg-gradient-to-br from-primary via-primary to-blue-600' />
+				<div className='absolute top-20 right-10 size-64 bg-white/10 rounded-full blur-3xl' />
+				<div className='absolute bottom-20 left-10 size-64 bg-blue-400/20 rounded-full blur-3xl' />
 
-				<div className="relative z-10 flex flex-col items-center justify-center p-12 text-white">
-					<span className="material-symbols-outlined text-8xl mb-8 opacity-80">
+				<div className='relative z-10 flex flex-col items-center justify-center p-12 text-white'>
+					<span className='material-symbols-outlined text-8xl mb-8 opacity-80'>
 						groups
 					</span>
-					<h2 className="text-3xl font-bold text-center mb-4">
+					<h2 className='text-3xl font-bold text-center mb-4'>
 						Join Your Community
 					</h2>
-					<p className="text-lg text-white/80 text-center max-w-md">
-						Connect with neighbors and local authorities to build a better
-						neighborhood together.
+					<p className='text-lg text-white/80 text-center max-w-md'>
+						Connect with neighbors and local authorities to build a
+						better neighborhood together.
 					</p>
 				</div>
 			</div>
 
 			{/* Right Panel - Form */}
-			<div className="w-full lg:w-1/2 flex flex-col">
+			<div className='w-full lg:w-1/2 flex flex-col'>
 				{/* Header */}
-				<header className="p-4 sm:p-6 flex items-center justify-between">
-					<Link href="/" className="flex items-center gap-3">
-						<div className="size-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600">
-							<span className="material-symbols-outlined text-white text-xl">
+				<header className='p-4 sm:p-6 flex items-center justify-between'>
+					<Link href='/' className='flex items-center gap-3'>
+						<div className='size-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600'>
+							<span className='material-symbols-outlined text-white text-xl'>
 								location_city
 							</span>
 						</div>
-						<span className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
+						<span className='text-xl font-bold text-text-primary-light dark:text-text-primary-dark'>
 							TownSpark
 						</span>
 					</Link>
 					<button
 						onClick={toggleDarkMode}
-						className="size-10 rounded-full flex items-center justify-center text-text-secondary-light dark:text-text-secondary-dark hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+						className='size-10 rounded-full flex items-center justify-center text-text-secondary-light dark:text-text-secondary-dark hover:bg-black/5 dark:hover:bg-white/10 transition-colors'
 					>
-						<span className="material-symbols-outlined">
+						<span className='material-symbols-outlined'>
 							{darkMode ? "light_mode" : "dark_mode"}
 						</span>
 					</button>
 				</header>
 
 				{/* Form */}
-				<div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-8 overflow-y-auto">
-					<div className="w-full max-w-md">
-						<h1 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2">
+				<div className='flex-1 flex items-center justify-center px-4 sm:px-8 py-8 overflow-y-auto'>
+					<div className='w-full max-w-md'>
+						<h1 className='text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2'>
 							Create Account
 						</h1>
-						<p className="text-text-secondary-light dark:text-text-secondary-dark mb-6">
+						<p className='text-text-secondary-light dark:text-text-secondary-dark mb-6'>
 							Join TownSpark and start reporting local issues
 						</p>
 
-						<form onSubmit={handleSubmit} className="space-y-5">
+						<form onSubmit={handleSubmit} className='space-y-5'>
 							{/* API Error Message */}
 							{errorMessage && (
-								<div className="p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
+								<div className='p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm'>
 									{errorMessage}
 								</div>
 							)}
 
-							<div className="grid grid-cols-2 gap-4">
+							<div className='grid grid-cols-2 gap-4'>
 								<Input
-									label="First Name"
-									name="firstName"
-									placeholder="Enter your first name"
+									label='First Name'
+									name='firstName'
+									placeholder='Enter your first name'
 									value={formData.firstName}
 									onChange={handleChange}
 									error={getFieldError("firstName")}
-									icon="person"
+									icon='person'
 									fullWidth
 								/>
 								<Input
-									label="Last Name"
-									name="lastName"
-									placeholder="Enter your last name"
+									label='Last Name'
+									name='lastName'
+									placeholder='Enter your last name'
 									value={formData.lastName}
 									onChange={handleChange}
 									error={getFieldError("lastName")}
-									icon="person"
+									icon='person'
 									fullWidth
 								/>
 							</div>
 
 							<Input
-								label="Email"
-								type="email"
-								name="email"
-								placeholder="you@example.com"
+								label='Email'
+								type='email'
+								name='email'
+								placeholder='you@example.com'
 								value={formData.email}
 								onChange={handleChange}
 								error={getFieldError("email")}
-								icon="mail"
+								icon='mail'
 								fullWidth
 							/>
 
 							<Input
-								label="Phone Number (Optional)"
-								type="tel"
-								name="phoneNumber"
-								placeholder="+1 234 567 8900"
+								label='Phone Number (Optional)'
+								type='tel'
+								name='phoneNumber'
+								placeholder='+1 234 567 8900'
 								value={formData.phoneNumber}
 								onChange={handleChange}
 								error={getFieldError("phoneNumber")}
-								icon="phone"
+								icon='phone'
 								fullWidth
 							/>
 
 							<Input
-								label="Address (Optional)"
-								name="address"
-								placeholder="Your address"
+								label='Address (Optional)'
+								name='address'
+								placeholder='Your address'
 								value={formData.address}
 								onChange={handleChange}
 								error={getFieldError("address")}
-								icon="location_on"
+								icon='location_on'
 								fullWidth
 							/>
 
 							<Input
-								label="Password"
-								type="password"
-								name="password"
-								placeholder="Create a strong password"
+								label='Password'
+								type='password'
+								name='password'
+								placeholder='Create a strong password'
 								value={formData.password}
 								onChange={handleChange}
 								error={getFieldError("password")}
-								icon="lock"
-								helperText="At least 8 characters"
+								icon='lock'
+								helperText='At least 8 characters'
 								fullWidth
 							/>
 
 							<Input
-								label="Confirm Password"
-								type="password"
-								name="confirmPassword"
-								placeholder="Confirm your password"
+								label='Confirm Password'
+								type='password'
+								name='confirmPassword'
+								placeholder='Confirm your password'
 								value={formData.confirmPassword}
 								onChange={handleChange}
 								error={getFieldError("confirmPassword")}
-								icon="lock"
+								icon='lock'
 								fullWidth
 							/>
 
@@ -269,18 +269,18 @@ function RegisterForm() {
 								checked={termsAccepted}
 								onChange={setTermsAccepted}
 								label={
-									<span className="text-text-secondary-light dark:text-text-secondary-dark">
+									<span className='text-text-secondary-light dark:text-text-secondary-dark'>
 										I agree to the{" "}
 										<Link
-											href="/terms"
-											className="text-primary hover:underline"
+											href='/terms'
+											className='text-primary hover:underline'
 										>
 											Terms of Service
 										</Link>{" "}
 										and{" "}
 										<Link
-											href="/privacy"
-											className="text-primary hover:underline"
+											href='/privacy'
+											className='text-primary hover:underline'
 										>
 											Privacy Policy
 										</Link>
@@ -288,26 +288,28 @@ function RegisterForm() {
 								}
 							/>
 							{errors.terms && (
-								<p className="text-sm text-red-500">{errors.terms}</p>
+								<p className='text-sm text-red-500'>
+									{errors.terms}
+								</p>
 							)}
 
 							<Button
-								type="submit"
+								type='submit'
 								loading={loading || authLoading}
 								disabled={loading || authLoading}
 								fullWidth
-								className="h-12"
+								className='h-12'
 							>
 								Create Account
 							</Button>
 						</form>
 
 						{/* Sign In Link */}
-						<p className="text-center mt-8 text-text-secondary-light dark:text-text-secondary-dark">
+						<p className='text-center mt-8 text-text-secondary-light dark:text-text-secondary-dark'>
 							Already have an account?{" "}
 							<Link
-								href="/login"
-								className="text-primary font-semibold hover:underline"
+								href='/login'
+								className='text-primary font-semibold hover:underline'
 							>
 								Sign in
 							</Link>
@@ -322,7 +324,7 @@ function RegisterForm() {
 // Wrap the register form with GuestOnly to redirect authenticated users
 export default function RegisterPage() {
 	return (
-		<GuestOnly redirectTo="/feed">
+		<GuestOnly redirectTo='/feed'>
 			<RegisterForm />
 		</GuestOnly>
 	);

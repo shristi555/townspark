@@ -109,16 +109,16 @@ function LoginForm() {
 				darkMode ? "bg-gray-900" : "bg-gray-50"
 			}`}
 		>
-			<div className="max-w-md w-full space-y-8">
-				<div className="text-center">
-					<div className="flex justify-center items-center gap-2 mb-4">
-						<Link href="/" className="flex items-center gap-3">
-							<div className="size-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600">
-								<span className="material-symbols-outlined text-white text-xl">
+			<div className='max-w-md w-full space-y-8'>
+				<div className='text-center'>
+					<div className='flex justify-center items-center gap-2 mb-4'>
+						<Link href='/' className='flex items-center gap-3'>
+							<div className='size-10 flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600'>
+								<span className='material-symbols-outlined text-white text-xl'>
 									location_city
 								</span>
 							</div>
-							<span className="text-xl font-bold text-text-primary-light dark:text-text-primary-dark">
+							<span className='text-xl font-bold text-text-primary-light dark:text-text-primary-dark'>
 								TownSpark
 							</span>
 						</Link>
@@ -137,7 +137,7 @@ function LoginForm() {
 					</p>
 				</div>
 
-				<div className="flex justify-center">
+				<div className='flex justify-center'>
 					<button
 						onClick={toggleDarkMode}
 						className={`p-2 rounded-lg transition-colors ${
@@ -148,23 +148,23 @@ function LoginForm() {
 					>
 						{darkMode ? (
 							<svg
-								className="w-5 h-5"
-								fill="currentColor"
-								viewBox="0 0 20 20"
+								className='w-5 h-5'
+								fill='currentColor'
+								viewBox='0 0 20 20'
 							>
 								<path
-									fillRule="evenodd"
-									d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-									clipRule="evenodd"
+									fillRule='evenodd'
+									d='M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z'
+									clipRule='evenodd'
 								/>
 							</svg>
 						) : (
 							<svg
-								className="w-5 h-5"
-								fill="currentColor"
-								viewBox="0 0 20 20"
+								className='w-5 h-5'
+								fill='currentColor'
+								viewBox='0 0 20 20'
 							>
-								<path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+								<path d='M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z' />
 							</svg>
 						)}
 					</button>
@@ -178,17 +178,17 @@ function LoginForm() {
 				>
 					{/* API Error Message */}
 					{errorMessage && (
-						<div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-							<p className="text-sm text-red-600 dark:text-red-400">
+						<div className='p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'>
+							<p className='text-sm text-red-600 dark:text-red-400'>
 								{errorMessage}
 							</p>
 						</div>
 					)}
 
-					<div className="space-y-4">
+					<div className='space-y-4'>
 						<div>
 							<label
-								htmlFor="email"
+								htmlFor='email'
 								className={`block text-sm font-medium mb-1 ${
 									darkMode ? "text-gray-300" : "text-gray-700"
 								}`}
@@ -196,13 +196,13 @@ function LoginForm() {
 								Email address
 							</label>
 							<Input
-								id="email"
-								name="email"
-								type="email"
-								autoComplete="email"
+								id='email'
+								name='email'
+								type='email'
+								autoComplete='email'
 								value={formData.email}
 								onChange={handleChange}
-								placeholder="Enter your email"
+								placeholder='Enter your email'
 								error={getFieldError("email")}
 								darkMode={darkMode}
 							/>
@@ -210,7 +210,7 @@ function LoginForm() {
 
 						<div>
 							<label
-								htmlFor="password"
+								htmlFor='password'
 								className={`block text-sm font-medium mb-1 ${
 									darkMode ? "text-gray-300" : "text-gray-700"
 								}`}
@@ -218,31 +218,31 @@ function LoginForm() {
 								Password
 							</label>
 							<Input
-								id="password"
-								name="password"
-								type="password"
-								autoComplete="current-password"
+								id='password'
+								name='password'
+								type='password'
+								autoComplete='current-password'
 								value={formData.password}
 								onChange={handleChange}
-								placeholder="Enter your password"
+								placeholder='Enter your password'
 								error={getFieldError("password")}
 								darkMode={darkMode}
 							/>
 						</div>
 					</div>
 
-					<div className="flex items-center justify-end">
+					<div className='flex items-center justify-end'>
 						<Link
-							href="/forgot-password"
-							className="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400"
+							href='/forgot-password'
+							className='text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400'
 						>
 							Forgot your password?
 						</Link>
 					</div>
 
 					<Button
-						type="submit"
-						variant="primary"
+						type='submit'
+						variant='primary'
 						fullWidth
 						loading={loading || authLoading}
 						disabled={loading || authLoading}
@@ -257,17 +257,17 @@ function LoginForm() {
 					>
 						Don&apos;t have an account?{" "}
 						<Link
-							href="/register"
-							className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+							href='/register'
+							className='font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400'
 						>
 							Sign up
 						</Link>
 					</p>
 				</form>
 
-				<div className="text-center">
+				<div className='text-center'>
 					<Link
-						href="/"
+						href='/'
 						className={`text-sm ${
 							darkMode
 								? "text-gray-400 hover:text-gray-300"
@@ -285,7 +285,7 @@ function LoginForm() {
 // Wrap the login form with GuestOnly to redirect authenticated users
 export default function LoginPage() {
 	return (
-		<GuestOnly redirectTo="/feed">
+		<GuestOnly redirectTo='/feed'>
 			<LoginForm />
 		</GuestOnly>
 	);
