@@ -2,10 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { GuestOnly } from "./z_internals/components/auth";
 
 // This page redirects to the appropriate landing or feed page
 // In a real app, this would check auth state and redirect accordingly
-export default function Home() {
+function HomeUi() {
 	const router = useRouter();
 
 	useEffect(() => {
@@ -29,5 +30,13 @@ export default function Home() {
 				</p>
 			</div>
 		</div>
+	);
+}
+
+export default function Home() {
+	return (
+		<GuestOnly redirectTo='/feed'>
+			<HomeUi />
+		</GuestOnly>
 	);
 }

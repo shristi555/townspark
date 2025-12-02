@@ -5,7 +5,6 @@ import {
 	createJSONStorage,
 } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
-import { useRouter } from "next/navigation";
 
 import { AuthService } from "../../services/auth/auth_service";
 import { RegisterModel } from "../../services/auth/register_model";
@@ -570,12 +569,21 @@ if (typeof window !== "undefined") {
 
 	// Subscribe to error messages
 	useAuthStore.subscribe(
-		(state) => state.errorMessage,
-		(errorMessage) => {
+		(state) => ({
+			errorMessage: state.errorMessage,
+			validationErrors: state.validationErrors,
+		}),
+		({ errorMessage, validationErrors }) => {
 			if (errorMessage) {
 				console.error("Auth error:", errorMessage);
-				// Could trigger toast notification here
 			}
+			if (validationErrors) {
+				console.error(
+					"Validation errors:",
+					JSON.stringify(validationErrors)
+				);
+			}
+			// Could trigger toast notification here
 		}
 	);
 }

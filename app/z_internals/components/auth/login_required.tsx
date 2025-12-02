@@ -39,7 +39,7 @@ interface LoginRequiredProps {
  * </LoginRequired>
  * ```
  */
-export function LoginRequired({
+export default function LoginRequired({
 	children,
 	message = "You must be logged in to access this section of TownSpark.",
 	showWarning = true,
@@ -183,5 +183,3 @@ function AuthLoadingSpinner() {
 		</div>
 	);
 }
-
-export default LoginRequired;

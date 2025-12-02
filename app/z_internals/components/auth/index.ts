@@ -2,7 +2,7 @@
 // These components provide various ways to protect content based on authentication status
 
 // Page-level guards (show access denied UI when unauthorized)
-export { LoginRequired } from "./login_required";
+export { default as LoginRequired } from "./login_required";
 export { AdminRequired } from "./admin_required";
 export { StaffRequired } from "./staff_required";
 export { RoleRequired } from "./role_required";

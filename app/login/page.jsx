@@ -285,7 +285,7 @@ function LoginForm() {
 // Wrap the login form with GuestOnly to redirect authenticated users
 export default function LoginPage() {
 	return (
-		<GuestOnly redirectTo='/feed'>
+		<GuestOnly redirectTo='/'>
 			<LoginForm />
 		</GuestOnly>
 	);

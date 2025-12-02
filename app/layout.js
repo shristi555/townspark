@@ -1,6 +1,7 @@
 import { ThemeProvider } from "./contexts/theme_context";
-import { AuthProvider } from "./contexts/auth_context";
+import { AuthProvider } from "./z_internals/controllers/auth";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
 
 export const metadata = {
 	title: "TownSpark - Report & Resolve Community Issues",
@@ -25,6 +26,8 @@ export default function RootLayout({ children }) {
 				<ThemeProvider>
 					<AuthProvider>{children}</AuthProvider>
 				</ThemeProvider>
+
+				<Toaster position='bottom-left' reverseOrder={false} />
 			</body>
 		</html>
 	);

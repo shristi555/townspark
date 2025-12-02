@@ -1,5 +1,6 @@
 import ApiService from "../api_service";
 import { BackendResponse } from "../backend_response";
+import toaster from "../messages/toast/toaster";
 import { RegisterModel } from "./register_model";
 
 class AuthService extends ApiService {
@@ -23,14 +24,17 @@ class AuthService extends ApiService {
 		password: string,
 		remember: boolean = false
 	): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/login", {
+		toaster.error(
+			"Login API endpoint is deprecated, use /auth/login/ instead."
+		);
+		return this.sendPostRequest("/auth/login/", {
 			data: { email, password, remember },
 			auth: false,
 		});
 	}
 
 	async signup(data: RegisterModel): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/register", {
+		return this.sendPostRequest("/auth/register/", {
 			data: data.toJson(),
 			files: data.profileImage
 				? { profile_image: data.profileImage }
@@ -44,7 +48,7 @@ class AuthService extends ApiService {
 	}
 
 	async logout(): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/logout", {
+		return this.sendPostRequest("/auth/logout/", {
 			auth: true,
 		});
 	}
@@ -52,14 +56,14 @@ class AuthService extends ApiService {
 	// ============ Token Management ============
 
 	async verifyToken(token: string): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/token/verify", {
+		return this.sendPostRequest("/auth/token/verify/", {
 			data: { token },
 			auth: false,
 		});
 	}
 
 	async refreshToken(refreshToken: string): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/token/refresh", {
+		return this.sendPostRequest("/auth/token/refresh/", {
 			data: { refresh: refreshToken },
 			auth: false,
 		});
@@ -68,7 +72,7 @@ class AuthService extends ApiService {
 	// ============ Profile Endpoints ============
 
 	async getProfile(): Promise<BackendResponse> {
-		return this.sendGetRequest("/auth/profile", {
+		return this.sendGetRequest("/auth/profile/", {
 			auth: true,
 		});
 	}
@@ -77,7 +81,7 @@ class AuthService extends ApiService {
 		data: Record<string, any>,
 		profileImage?: File | null
 	): Promise<BackendResponse> {
-		return this.sendPatchRequest("/auth/profile", {
+		return this.sendPatchRequest("/auth/profile/", {
 			data,
 			files: profileImage ? { profile_image: profileImage } : null,
 			auth: true,
@@ -94,7 +98,7 @@ class AuthService extends ApiService {
 		currentPassword: string,
 		newPassword: string
 	): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/password/change", {
+		return this.sendPostRequest("/auth/password/change/", {
 			data: {
 				current_password: currentPassword,
 				new_password: newPassword,
@@ -104,7 +108,7 @@ class AuthService extends ApiService {
 	}
 
 	async requestPasswordReset(email: string): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/password/reset/request", {
+		return this.sendPostRequest("/auth/password/reset/request/", {
 			data: { email },
 			auth: false,
 		});
@@ -114,7 +118,7 @@ class AuthService extends ApiService {
 		token: string,
 		newPassword: string
 	): Promise<BackendResponse> {
-		return this.sendPostRequest("/auth/password/reset/confirm", {
+		return this.sendPostRequest("/auth/password/reset/confirm/", {
 			data: { token, new_password: newPassword },
 			auth: false,
 		});

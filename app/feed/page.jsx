@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Header, BottomNavigation, Sidebar } from "../components/layout";
 import { IssueList } from "../components/features";
 import { Button, Loader } from "../components/ui";
-import { useAuth } from "../contexts/auth_context";
+
 import { useIssues } from "../hooks";
 import Link from "next/link";
 
