@@ -19,6 +19,20 @@ const buttonSizes = {
 	icon: "h-10 w-10",
 };
 
+/**
+ * @typedef {Object} ButtonProps
+ * @property {React.ReactNode} [children]
+ * @property {'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'accent'} [variant]
+ * @property {'sm' | 'md' | 'lg' | 'icon'} [size]
+ * @property {string} [icon]
+ * @property {'left' | 'right'} [iconPosition]
+ * @property {boolean} [fullWidth]
+ * @property {boolean} [disabled]
+ * @property {boolean} [loading]
+ * @property {string} [className]
+ */
+
+/** @type {React.ForwardRefExoticComponent<ButtonProps & React.RefAttributes<HTMLButtonElement>>} */
 const Button = forwardRef(
 	(
 		{

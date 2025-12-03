@@ -16,222 +16,168 @@ import Link from "next/link";
 
 import { useIssueStore } from "../z_internals/controllers/issue";
 import { AuthGuard, useAuthStore } from "../z_internals/controllers/auth";
+import Scaffold from "../components/scaffold";
 
 function ProfilePageUi() {
-	const router = useRouter();
-
-	const { fetchMyIssues, myIssues } = useIssueStore();
-
-	const { userInfo } = useAuthStore();
-
-	const [myCreatedIssue, setMyCreatedIssue] = useState([]);
-
-	// Fetch upvoted issues
-	useEffect(() => {
-		fetchMyIssues();
-	}, [myIssues, fetchMyIssues]);
-
-	// Redirect to login if not authenticated
-	useEffect(() => {
-		if (!authLoading && !isAuthenticated) {
-			router.push("/login");
-		}
-	}, [authLoading, isAuthenticated, router]);
-
-	// Show loading while checking auth
-	if (authLoading || !user) {
-		return (
-			<div className='min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark'>
-				<Loader size='lg' />
-			</div>
-		);
-	}
-
 	return (
-		<div className='min-h-screen bg-background-light dark:bg-background-dark'>
-			<Sidebar
-				isOpen={sidebarOpen}
-				onClose={() => setSidebarOpen(false)}
-				showResolverNav={user?.is_staff}
-				showAdminNav={user?.is_admin}
-			/>
-
-			<div className='md:ml-72'>
-				<Header
-					title='My Profile'
-					actions={
-						<>
-							<button
-								onClick={() => setSidebarOpen(true)}
-								className='md:hidden flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-text-primary-light dark:text-text-primary-dark'
-							>
-								<span className='material-symbols-outlined'>
-									menu
-								</span>
-							</button>
-							<Link href='/settings'>
-								<button className='flex items-center justify-center size-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-text-primary-light dark:text-text-primary-dark'>
-									<span className='material-symbols-outlined'>
-										settings
+		<>
+			<Scaffold>
+				<div className='p-10'>
+					<div className='flex flex-col gap-8 max-w-5xl mx-auto'>
+						<div className='flex p-6 @container bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl'>
+							<div className='flex w-full flex-col gap-6 @[520px]:flex-row @[520px]:justify-between @[520px]:items-center'>
+								<div className='flex gap-6 items-center'>
+									<div
+										className='bg-center bg-no-repeat aspect-square bg-cover rounded-full h-32 w-32 shrink-0'
+										data-alt='Profile picture of Jane Doe'
+										style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCz-NHJiaEshezjl3DKHAqkJJ-W3ldQTkwciXHLabATpmEULQEu-WlRpy4FzDtaSFPwa_rNqv5I8AMqewKb65GXbHhOkC8yxqSBRnsSmLVMfRWDYFiTNmozMXQjC9KkjvpBM-nFXzK4GiZcH_LsQ8bl4tnFC21WrP9NQQgldAqfhxHzk8w9QIvUtjFK75amwSJRJBKEvcuU_4N27h71czykZmFkqzEnex5eb95npDtQVM2qLfMuTuEKJ3w42XOOsyp41gdx9b-mWtY');"
+									></div>
+									<div className='flex flex-col justify-center gap-1'>
+										<p className='text-text-light-primary dark:text-text-dark-primary text-2xl font-bold leading-tight tracking-tight'>
+											Jane Doe
+										</p>
+										<p className='text-text-light-secondary dark:text-text-dark-secondary text-base font-normal leading-normal'>
+											jane.doe@example.com
+										</p>
+										<p className='text-text-light-secondary dark:text-text-dark-secondary text-base font-normal leading-normal'>
+											123 Maple Street, Anytown, USA
+										</p>
+									</div>
+								</div>
+								<button className='flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-5 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] w-full max-w-[480px] @[480px]:w-auto gap-2'>
+									<span className='material-symbols-outlined !text-xl'>
+										edit
 									</span>
+									<span className='truncate'>Edit Profile</span>
 								</button>
-							</Link>
-						</>
-					}
-				/>
+							</div>
+						</div>
 
-				<main className='max-w-4xl mx-auto px-4 py-6 pb-24 md:pb-6'>
-					{/* Profile Header */}
-					<div className='bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark overflow-hidden mb-6'>
-						{/* Cover */}
-						<div className='h-32 bg-gradient-to-r from-primary to-blue-600' />
+						<div className='flex flex-col'>
+							<div className='border-b border-border-light dark:border-border-dark px-4'>
+								<div className='flex gap-8'>
+									<a
+										className='flex flex-col items-center justify-center border-b-[3px] border-b-primary text-primary pb-[13px] pt-4'
+										href='#'
+									>
+										<p className='text-sm font-bold leading-normal tracking-[0.015em]'>
+											Posted Issues
+										</p>
+									</a>
+									<a
+										className='flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-text-light-secondary dark:text-text-dark-secondary pb-[13px] pt-4'
+										href='#'
+									>
+										<p className='text-sm font-bold leading-normal tracking-[0.015em]'>
+											My Comments
+										</p>
+									</a>
+									<a
+										className='flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-text-light-secondary dark:text-text-dark-secondary pb-[13px] pt-4'
+										href='#'
+									>
+										<p className='text-sm font-bold leading-normal tracking-[0.015em]'>
+											Bookmarks
+										</p>
+									</a>
+								</div>
+							</div>
 
-						{/* Profile Info */}
-						<div className='px-4 sm:px-6 pb-6'>
-							<div className='flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-8'>
-								<Avatar
-									src={user.profile_image || user.avatar}
-									name={user.full_name || user.name}
-									size='xl'
-									className='ring-4 ring-card-light dark:ring-card-dark'
-								/>
-								<div className='flex-1'>
-									<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
-										<div>
-											<h1 className='text-xl font-bold text-text-primary-light dark:text-text-primary-dark'>
-												{user.full_name || user.name}
-											</h1>
-											<p className='text-text-secondary-light dark:text-text-secondary-dark'>
-												@
-												{user.username ||
-													user.email?.split("@")[0]}
+							<div className='flex flex-col divide-y divide-border-light dark:divide-border-dark border border-border-light dark:border-border-dark rounded-b-xl bg-surface-light dark:bg-surface-dark'>
+								<div className='flex gap-4 px-6 py-4 justify-between items-center'>
+									<div className='flex items-start gap-4 flex-1'>
+										<div className='text-text-light-primary dark:text-text-dark-primary flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark shrink-0 size-12'>
+											<span className='material-symbols-outlined'>
+												road
+											</span>
+										</div>
+										<div className='flex flex-1 flex-col justify-center'>
+											<p className='text-text-light-primary dark:text-text-dark-primary text-base font-medium leading-normal'>
+												Large Pothole on Elm Street
+											</p>
+											<p className='text-text-light-secondary dark:text-text-dark-secondary text-sm font-normal leading-normal'>
+												Posted: 2 days ago
 											</p>
 										</div>
-										<Link href='/settings/profile'>
-											<Button variant='outline' size='sm'>
-												<span className='material-symbols-outlined mr-1 text-lg'>
-													edit
-												</span>
-												Edit Profile
-											</Button>
-										</Link>
+									</div>
+									<div className='flex items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400'>
+										<div className='size-2 rounded-full bg-green-500'></div>
+										<span>Resolved</span>
+									</div>
+								</div>
+
+								<div className='flex gap-4 px-6 py-4 justify-between items-center'>
+									<div className='flex items-start gap-4 flex-1'>
+										<div className='text-text-light-primary dark:text-text-dark-primary flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark shrink-0 size-12'>
+											<span className='material-symbols-outlined'>
+												broken_image
+											</span>
+										</div>
+										<div classNameName='flex flex-1 flex-col justify-center'>
+											<p className='text-text-light-primary dark:text-text-dark-primary text-base font-medium leading-normal'>
+												Graffiti on Park Bench
+											</p>
+											<p className='text-text-light-secondary dark:text-text-dark-secondary text-sm font-normal leading-normal'>
+												Posted: 1 week ago
+											</p>
+										</div>
+									</div>
+									<div className='flex items-center gap-2 rounded-full bg-orange-500/10 px-3 py-1 text-sm font-medium text-orange-600 dark:text-orange-400'>
+										<div className='size-2 rounded-full bg-orange-500'></div>
+										<span>In Progress</span>
+									</div>
+								</div>
+
+								<div className='flex gap-4 px-6 py-4 justify-between items-center'>
+									<div className='flex items-start gap-4 flex-1'>
+										<div className='text-text-light-primary dark:text-text-dark-primary flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark shrink-0 size-12'>
+											<span className='material-symbols-outlined'>
+												light
+											</span>
+										</div>
+										<div className='flex flex-1 flex-col justify-center'>
+											<p className='text-text-light-primary dark:text-text-dark-primary text-base font-medium leading-normal'>
+												Broken Streetlight at Oak &amp;
+												Main
+											</p>
+											<p className='text-text-light-secondary dark:text-text-dark-secondary text-sm font-normal leading-normal'>
+												Posted: 3 weeks ago
+											</p>
+										</div>
+									</div>
+									<div className='flex items-center gap-2 rounded-full bg-slate-500/10 px-3 py-1 text-sm font-medium text-slate-600 dark:text-slate-400'>
+										<div className='size-2 rounded-full bg-slate-500'></div>
+										<span>Open</span>
+									</div>
+								</div>
+								<div className='flex gap-4 px-6 py-4 justify-between items-center'>
+									<div className='flex items-start gap-4 flex-1'>
+										<div className='text-text-light-primary dark:text-text-dark-primary flex items-center justify-center rounded-lg bg-background-light dark:bg-background-dark shrink-0 size-12'>
+											<span className='material-symbols-outlined'>
+												recycling
+											</span>
+										</div>
+										<div className='flex flex-1 flex-col justify-center'>
+											<p className='text-text-light-primary dark:text-text-dark-primary text-base font-medium leading-normal'>
+												Overflowing Recycling Bins at
+												Town Square
+											</p>
+											<p className='text-text-light-secondary dark:text-text-dark-secondary text-sm font-normal leading-normal'>
+												Posted: 1 month ago
+											</p>
+										</div>
+									</div>
+									<div className='flex items-center gap-2 rounded-full bg-green-500/10 px-3 py-1 text-sm font-medium text-green-600 dark:text-green-400'>
+										<div className='size-2 rounded-full bg-green-500'></div>
+										<span>Resolved</span>
 									</div>
 								</div>
 							</div>
-
-							{/* Bio */}
-							{user.bio && (
-								<p className='mt-4 text-text-secondary-light dark:text-text-secondary-dark'>
-									{user.bio}
-								</p>
-							)}
-
-							{/* Meta Info */}
-							<div className='flex flex-wrap items-center gap-4 mt-4 text-sm text-text-secondary-light dark:text-text-secondary-dark'>
-								{user.location && (
-									<div className='flex items-center gap-1'>
-										<span className='material-symbols-outlined text-lg'>
-											location_on
-										</span>
-										{user.location}
-									</div>
-								)}
-								<div className='flex items-center gap-1'>
-									<span className='material-symbols-outlined text-lg'>
-										calendar_today
-									</span>
-									Joined{" "}
-									{new Date(
-										user.created_at ||
-											user.joinedAt ||
-											Date.now()
-									).toLocaleDateString("en-US", {
-										month: "long",
-										year: "numeric",
-									})}
-								</div>
-								{(user.is_admin || user.is_staff) && (
-									<Badge
-										status={
-											user.is_staff && !user.is_admin
-												? "acknowledged"
-												: "resolved"
-										}
-									>
-										{user.is_admin ? "Admin" : "Staff"}
-									</Badge>
-								)}
-							</div>
 						</div>
 					</div>
-
-					{/* Stats */}
-					<StatsGrid stats={userStats} columns={4} className='mb-6' />
-
-					{/* Tabs & Content */}
-					<div className='bg-card-light dark:bg-card-dark rounded-xl border border-border-light dark:border-border-dark overflow-hidden'>
-						<Tabs
-							tabs={tabs}
-							activeTab={activeTab}
-							onChange={setActiveTab}
-							className='px-4 pt-4'
-						/>
-
-						<div className='p-4'>
-							<TabPanel id='reported' activeTab={activeTab}>
-								<IssueList
-									issues={reportedIssues}
-									loading={issuesLoading}
-									showFilters={false}
-									showSort={false}
-									cardVariant='compact'
-									emptyTitle='No active reports'
-									emptyDescription='Your reported issues that are resolved will appear here'
-								/>
-							</TabPanel>
-
-							<TabPanel id='resolved' activeTab={activeTab}>
-								<IssueList
-									issues={resolvedIssues}
-									loading={issuesLoading}
-									showFilters={false}
-									showSort={false}
-									cardVariant='compact'
-									emptyTitle='No resolved issues'
-									emptyDescription='Issues you report that get resolved will appear here'
-								/>
-							</TabPanel>
-
-							<TabPanel id='bookmarked' activeTab={activeTab}>
-								<IssueList
-									issues={bookmarks}
-									loading={bookmarksLoading}
-									showFilters={false}
-									showSort={false}
-									cardVariant='compact'
-									emptyTitle='No bookmarks'
-									emptyDescription='Save issues to view them later'
-								/>
-							</TabPanel>
-
-							<TabPanel id='upvoted' activeTab={activeTab}>
-								<IssueList
-									issues={upvoted}
-									loading={upvotedLoading}
-									showFilters={false}
-									showSort={false}
-									cardVariant='compact'
-									emptyTitle='No upvoted issues'
-									emptyDescription='Issues you upvote will appear here'
-								/>
-							</TabPanel>
-						</div>
-					</div>
-				</main>
-
-				<BottomNavigation />
-			</div>
-		</div>
+				</div>
+			</Scaffold>
+		</>
 	);
 }
 

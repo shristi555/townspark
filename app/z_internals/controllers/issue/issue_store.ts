@@ -136,6 +136,8 @@ function handleBackendError(
 ) {
 	const error = result.error;
 
+	console.log("Backend error:", result.toJson());
+
 	if (!error) {
 		set((state) => {
 			state.errorMessage = "An unknown error occurred";

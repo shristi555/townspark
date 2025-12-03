@@ -9,11 +9,8 @@ import { PageLoader } from "@/app/components/ui/loader";
 import EmptyState from "@/app/components/ui/empty_state";
 import FilterChip, { FilterChipGroup } from "@/app/components/ui/filter_chip";
 import Button from "@/app/components/ui/button";
-import { Issue } from "@/app/z_internals/models/issue_model";
 
-type StatusFilter = "all" | "open" | "in_progress" | "resolved" | "closed";
-
-const statusFilters: { label: string; value: StatusFilter }[] = [
+const statusFilters = [
 	{ label: "All", value: "all" },
 	{ label: "Open", value: "open" },
 	{ label: "In Progress", value: "in_progress" },
@@ -21,7 +18,7 @@ const statusFilters: { label: string; value: StatusFilter }[] = [
 	{ label: "Closed", value: "closed" },
 ];
 
-function getStatusBadgeVariant(status: string) {
+function getStatusBadgeVariant(status) {
 	switch (status) {
 		case "open":
 			return "reported";
@@ -36,14 +33,14 @@ function getStatusBadgeVariant(status: string) {
 	}
 }
 
-function formatStatus(status: string) {
+function formatStatus(status) {
 	return status
 		.split("_")
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 		.join(" ");
 }
 
-function formatTimeAgo(dateString: string): string {
+function formatTimeAgo(dateString) {
 	const date = new Date(dateString);
 	const now = new Date();
 	const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
@@ -66,16 +63,11 @@ function formatTimeAgo(dateString: string): string {
 	return "Just now";
 }
 
-function IssueCard({ issue, onClick }: { issue: Issue; onClick: () => void }) {
+function MyIssueCard({ issue, onView, onEdit }) {
 	const imageUrl = issue.images?.[0] || null;
 
 	return (
-		<Card
-			padding={false}
-			hover
-			onClick={onClick}
-			className='overflow-hidden'
-		>
+		<Card padding={false} className='overflow-hidden'>
 			{/* Image Section */}
 			{imageUrl && (
 				<div className='relative w-full'>
@@ -87,7 +79,6 @@ function IssueCard({ issue, onClick }: { issue: Issue; onClick: () => void }) {
 						<Badge
 							variant={getStatusBadgeVariant(issue.status)}
 							size='md'
-							icon={null}
 						>
 							{formatStatus(issue.status)}
 						</Badge>
@@ -96,13 +87,12 @@ function IssueCard({ issue, onClick }: { issue: Issue; onClick: () => void }) {
 			)}
 
 			{/* Content Section */}
-			<div className='flex flex-col gap-3 p-4'>
+			<div className='flex w-full grow flex-col gap-3 p-4'>
 				{!imageUrl && (
 					<div className='flex justify-end'>
 						<Badge
 							variant={getStatusBadgeVariant(issue.status)}
 							size='md'
-							icon={null}
 						>
 							{formatStatus(issue.status)}
 						</Badge>
@@ -113,11 +103,15 @@ function IssueCard({ issue, onClick }: { issue: Issue; onClick: () => void }) {
 					{issue.title}
 				</h3>
 
+				<p className='text-sm text-text-secondary-light dark:text-text-secondary-dark line-clamp-2'>
+					{issue.description}
+				</p>
+
 				<div className='flex items-center gap-2'>
 					<span className='material-symbols-outlined text-sm text-text-secondary-light dark:text-text-secondary-dark'>
 						location_on
 					</span>
-					<p className='text-base font-normal text-text-secondary-light dark:text-text-secondary-dark'>
+					<p className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
 						{issue.location}
 					</p>
 				</div>
@@ -126,7 +120,7 @@ function IssueCard({ issue, onClick }: { issue: Issue; onClick: () => void }) {
 					<span className='material-symbols-outlined text-sm text-text-secondary-light dark:text-text-secondary-dark'>
 						category
 					</span>
-					<p className='text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark'>
+					<p className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
 						{issue.category?.name || "Uncategorized"}
 					</p>
 				</div>
@@ -134,43 +128,70 @@ function IssueCard({ issue, onClick }: { issue: Issue; onClick: () => void }) {
 				<div className='border-t border-border-light dark:border-border-dark' />
 
 				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-2'>
-						<div className='size-6 rounded-full bg-primary/20 flex items-center justify-center'>
-							<span className='text-xs font-bold text-primary'>
-								{issue.reported_by?.full_name?.charAt(0) || "?"}
-							</span>
-						</div>
-						<span className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
-							{issue.reported_by?.full_name || "Anonymous"}
-						</span>
-					</div>
 					<p className='text-sm text-text-secondary-light dark:text-text-secondary-dark'>
 						{formatTimeAgo(issue.created_at)}
 					</p>
+					<div className='flex items-center gap-2'>
+						<Button
+							size='sm'
+							variant='secondary'
+							onClick={() => onView(issue.id)}
+						>
+							<span className='material-symbols-outlined text-base'>
+								visibility
+							</span>
+							View
+						</Button>
+						{/* Only allow editing for open issues */}
+						{issue.status === "open" && (
+							<Button
+								size='sm'
+								variant='primary'
+								onClick={() => onEdit(issue.id)}
+							>
+								<span className='material-symbols-outlined text-base'>
+									edit
+								</span>
+								Edit
+							</Button>
+						)}
+					</div>
 				</div>
 			</div>
 		</Card>
 	);
 }
 
-export default function IssueListPage() {
+export default function MyIssuesPage() {
 	const router = useRouter();
-	const { issues, isLoading, errorMessage, fetchIssues } = useIssueStore();
-	const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
+	const {
+		myIssues,
+		isLoading,
+		errorMessage,
+		fetchMyIssues,
+		deleteIssue,
+		isDeleting,
+	} = useIssueStore();
+	const [activeFilter, setActiveFilter] = useState("all");
+	const [deletingId, setDeletingId] = useState(null);
 
 	useEffect(() => {
-		fetchIssues().catch((err) => {
-			console.error("Failed to fetch issues:", err);
+		fetchMyIssues().catch((err) => {
+			console.error("Failed to fetch my issues:", err);
 		});
-	}, [fetchIssues]);
+	}, [fetchMyIssues]);
 
 	const filteredIssues =
 		activeFilter === "all"
-			? issues
-			: issues.filter((issue) => issue.status === activeFilter);
+			? myIssues
+			: myIssues.filter((issue) => issue.status === activeFilter);
 
-	const handleIssueClick = (issueId: number) => {
+	const handleViewIssue = (issueId) => {
 		router.push(`/issue/${issueId}`);
+	};
+
+	const handleEditIssue = (issueId) => {
+		router.push(`/issue/edit?id=${issueId}`);
 	};
 
 	const handleAddIssue = () => {
@@ -190,25 +211,64 @@ export default function IssueListPage() {
 					</span>
 				</button>
 				<h1 className='flex-1 text-center text-lg font-bold text-text-primary-light dark:text-text-primary-dark'>
-					All Issues
+					My Issues
 				</h1>
 				<Button
 					size='icon'
 					variant='primary'
 					onClick={handleAddIssue}
 					className='rounded-full'
-					icon='add'
-				/>
+				>
+					<span className='material-symbols-outlined'>add</span>
+				</Button>
 			</header>
 
+			{/* Stats */}
+			<div className='grid grid-cols-4 gap-2 p-4 pb-2'>
+				<div className='flex flex-col items-center p-3 bg-card-light dark:bg-card-dark rounded-lg border border-border-light dark:border-border-dark'>
+					<span className='text-2xl font-bold text-text-primary-light dark:text-text-primary-dark'>
+						{myIssues.length}
+					</span>
+					<span className='text-xs text-text-secondary-light dark:text-text-secondary-dark'>
+						Total
+					</span>
+				</div>
+				<div className='flex flex-col items-center p-3 bg-card-light dark:bg-card-dark rounded-lg border border-border-light dark:border-border-dark'>
+					<span className='text-2xl font-bold text-status-reported'>
+						{myIssues.filter((i) => i.status === "open").length}
+					</span>
+					<span className='text-xs text-text-secondary-light dark:text-text-secondary-dark'>
+						Open
+					</span>
+				</div>
+				<div className='flex flex-col items-center p-3 bg-card-light dark:bg-card-dark rounded-lg border border-border-light dark:border-border-dark'>
+					<span className='text-2xl font-bold text-status-progress'>
+						{
+							myIssues.filter((i) => i.status === "in_progress")
+								.length
+						}
+					</span>
+					<span className='text-xs text-text-secondary-light dark:text-text-secondary-dark'>
+						In Progress
+					</span>
+				</div>
+				<div className='flex flex-col items-center p-3 bg-card-light dark:bg-card-dark rounded-lg border border-border-light dark:border-border-dark'>
+					<span className='text-2xl font-bold text-status-resolved'>
+						{myIssues.filter((i) => i.status === "resolved").length}
+					</span>
+					<span className='text-xs text-text-secondary-light dark:text-text-secondary-dark'>
+						Resolved
+					</span>
+				</div>
+			</div>
+
 			{/* Filter Chips */}
-			<div className='p-4 pb-2'>
+			<div className='px-4 pb-2'>
 				<FilterChipGroup>
 					{statusFilters.map((filter) => (
 						<FilterChip
 							key={filter.value}
 							label={filter.label}
-							icon={null}
 							isActive={activeFilter === filter.value}
 							onClick={() => setActiveFilter(filter.value)}
 						/>
@@ -228,7 +288,7 @@ export default function IssueListPage() {
 						action={
 							<Button
 								variant='primary'
-								onClick={() => fetchIssues()}
+								onClick={() => fetchMyIssues()}
 							>
 								Try Again
 							</Button>
@@ -239,13 +299,13 @@ export default function IssueListPage() {
 						icon='report'
 						title={
 							activeFilter === "all"
-								? "No Issues Found"
+								? "No Issues Reported"
 								: `No ${formatStatus(activeFilter)} Issues`
 						}
 						description={
 							activeFilter === "all"
-								? "Be the first to report an issue in your community."
-								: `There are no issues with status "${formatStatus(activeFilter)}" at the moment.`
+								? "You haven't reported any issues yet. Start by reporting an issue in your community."
+								: `You don't have any issues with status "${formatStatus(activeFilter)}".`
 						}
 						action={
 							activeFilter === "all" ? (
@@ -268,10 +328,11 @@ export default function IssueListPage() {
 				) : (
 					<div className='flex flex-col gap-4'>
 						{filteredIssues.map((issue) => (
-							<IssueCard
+							<MyIssueCard
 								key={issue.id}
 								issue={issue}
-								onClick={() => handleIssueClick(issue.id)}
+								onView={handleViewIssue}
+								onEdit={handleEditIssue}
 							/>
 						))}
 					</div>
