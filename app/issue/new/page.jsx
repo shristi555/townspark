@@ -10,8 +10,9 @@ import Select from "@/app/components/ui/select";
 import Button from "@/app/components/ui/button";
 import ImageUploader from "@/app/components/ui/image_uploader";
 import { PageLoader } from "@/app/components/ui/loader";
+import { AuthGuard } from "@/app/z_internals/controllers/auth";
 
-export default function NewIssuePage() {
+function NewIssuePageUi() {
 	const router = useRouter();
 	const {
 		categories,
@@ -273,5 +274,13 @@ export default function NewIssuePage() {
 				)}
 			</main>
 		</div>
+	);
+}
+
+export default function NewIssuePage() {
+	return (
+		<AuthGuard>
+			<NewIssuePageUi />
+		</AuthGuard>
 	);
 }

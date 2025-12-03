@@ -169,11 +169,11 @@ class ApiService {
 				}
 
 				requestData = formData;
-				// Let browser set content-type with boundary for FormData
-				delete headers["Content-Type"];
+
+				headers["Content-Type"] = "multipart/form-data";
 			} else {
 				requestData = data;
-				headers["Content-Type"] = "application/json";
+				headers["Content-Type"] = "multipart/form-data";
 			}
 
 			// Merge custom headers

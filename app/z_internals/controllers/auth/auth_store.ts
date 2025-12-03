@@ -489,6 +489,8 @@ function handleBackendError(
 	const message = (error.message as string) ?? "An error occurred";
 	const details = error.details;
 
+	console.error("Backend error details:", response.toJson());
+
 	if (details && typeof details === "object" && !Array.isArray(details)) {
 		// Field-level validation errors
 		const fieldErrors: ValidationErrors = {};

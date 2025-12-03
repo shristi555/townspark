@@ -36,6 +36,7 @@ export interface CreateIssueData {
 	description: string;
 	location: string;
 	category: number;
+	images?: string[];
 }
 
 export interface IssueState {
@@ -320,12 +321,17 @@ export const useIssueStore = create<IssueStore>()(
 						await issueService.fetchIssueDetails(issueId);
 
 					if (!result.success) {
+						console.log(
+							"Failed to fetch issue details:",
+							result.toJson()
+						);
 						handleBackendError(set, result);
 						return null;
 					}
 
 					if (result.response) {
 						const issue = Issue.fromJson(result.response);
+						console.log("Fetched issue details:", issue);
 						set((state) => {
 							state.currentIssue = issue;
 						});
@@ -380,6 +386,12 @@ export const useIssueStore = create<IssueStore>()(
 
 				try {
 					const result = await issueService.fetchCategories();
+
+					console.log("Fetch categories result:", result.toJson());
+					console.log(
+						"Fetch categories response:",
+						JSON.stringify(result.response, null, 4)
+					);
 
 					if (!result.success) {
 						handleBackendError(set, result);

@@ -85,6 +85,10 @@ class IssueService extends ApiService {
 		},
 		files?: Record<string, File> | null
 	): Promise<BackendResponse> {
+		console.log(
+			`Creating issue with data: ${JSON.stringify(data)}, files: ${files ? Object.keys(files) : "none"}`
+		);
+
 		return this.sendPostRequest("/issues/new/", {
 			data: data,
 			files: files ?? null,

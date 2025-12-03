@@ -9,7 +9,7 @@ export { default as Badge } from "./badge";
 export { default as Card } from "./card";
 export { default as Avatar } from "./avatar";
 export { default as Modal } from "./modal";
-export { default as Toast, useToast } from "./toast";
+
 export { default as Loader } from "./loader";
 export { default as EmptyState } from "./empty_state";
 export { default as StatCard } from "./stat_card";
