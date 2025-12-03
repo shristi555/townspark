@@ -5,12 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuthStore } from "../z_internals/controllers/auth";
 
-interface NavLink {
-	name: string;
-	href: string;
-}
-
-const navLinks: NavLink[] = [
+const navLinks = [
 	{ name: "Dashboard", href: "/feed" },
 	{ name: "Explore", href: "/issue/list" },
 	{ name: "Report Issue", href: "/issue/new" },
@@ -27,14 +22,14 @@ export default function Topbar() {
 	const [showMobileMenu, setShowMobileMenu] = useState(false);
 	const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-	const isActive = (href: string) => {
+	const isActive = (href) => {
 		if (href === "/feed") {
 			return pathname === "/feed" || pathname === "/";
 		}
 		return pathname.startsWith(href);
 	};
 
-	const handleSearch = (e: React.FormEvent) => {
+	const handleSearch = (e) => {
 		e.preventDefault();
 		if (searchQuery.trim()) {
 			router.push(

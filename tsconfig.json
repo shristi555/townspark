@@ -31,6 +31,6 @@
 		"**/*.ts",
 		"**/*.tsx",
 		"app/z_internals/services/messages/toast/toaster.js"
-, "app/issue/list/page.tsx"	],
+, "app/issue/list/page.tsx", "app/components/sidebar.jsx", "app/components/topbar.jsx"	],
 	"exclude": ["node_modules"]
 }

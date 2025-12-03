@@ -4,14 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "../z_internals/controllers/auth";
 
-interface NavItem {
-	name: string;
-	href: string;
-	icon: string;
-	activeIcon?: string;
-}
-
-const navItems: NavItem[] = [
+const navItems = [
 	{
 		name: "Dashboard",
 		href: "/feed",
@@ -54,7 +47,7 @@ export default function Sidebar() {
 	const pathname = usePathname();
 	const userInfo = useAuthStore((state) => state.userInfo);
 
-	const isActive = (href: string) => {
+	const isActive = (href) => {
 		if (href === "/feed") {
 			return pathname === "/feed" || pathname === "/";
 		}
