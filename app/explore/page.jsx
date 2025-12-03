@@ -7,6 +7,7 @@ import { Input, FilterChip, Button, Loader } from "../components/ui";
 import { useCategories } from "../hooks";
 import { IssueService } from "../modules/issues";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ExplorePage() {
 	const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +19,8 @@ export default function ExplorePage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [pagination, setPagination] = useState(null);
+
+	const router = useRouter();
 
 	// Fetch categories from API
 	const { data: categories, loading: categoriesLoading } = useCategories();
