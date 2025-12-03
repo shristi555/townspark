@@ -12,46 +12,24 @@ import {
 	Badge,
 	Loader,
 } from "../components/ui";
-import { useAuth } from "../contexts/auth_context";
-import { useMyIssues, useMyBookmarks } from "../hooks";
-import { UserService } from "../modules/users";
 import Link from "next/link";
 
-export default function ProfilePage() {
+import { useIssueStore } from "../z_internals/controllers/issue";
+import { AuthGuard, useAuthStore } from "../z_internals/controllers/auth";
+
+function ProfilePageUi() {
 	const router = useRouter();
-	const { user, isAuthenticated, loading: authLoading } = useAuth();
-	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const [activeTab, setActiveTab] = useState("reported");
 
-	// Fetch user's issues
-	const { issues: myIssues, loading: issuesLoading } = useMyIssues();
-	const { data: bookmarkedIssues, loading: bookmarksLoading } =
-		useMyBookmarks();
+	const { fetchMyIssues, myIssues } = useIssueStore();
 
-	// State for upvoted issues
-	const [upvotedIssues, setUpvotedIssues] = useState([]);
-	const [upvotedLoading, setUpvotedLoading] = useState(true);
+	const { userInfo } = useAuthStore();
+
+	const [myCreatedIssue, setMyCreatedIssue] = useState([]);
 
 	// Fetch upvoted issues
 	useEffect(() => {
-		const fetchUpvoted = async () => {
-			try {
-				const response = await UserService.getMyUpvoted();
-				if (response.success) {
-					setUpvotedIssues(
-						response.data?.results || response.data || []
-					);
-				}
-			} catch (error) {
-				console.error("Failed to fetch upvoted issues:", error);
-			} finally {
-				setUpvotedLoading(false);
-			}
-		};
-		if (isAuthenticated) {
-			fetchUpvoted();
-		}
-	}, [isAuthenticated]);
+		fetchMyIssues();
+	}, [myIssues, fetchMyIssues]);
 
 	// Redirect to login if not authenticated
 	useEffect(() => {
@@ -68,46 +46,6 @@ export default function ProfilePage() {
 			</div>
 		);
 	}
-
-	// Filter issues
-	const reportedIssues =
-		myIssues?.filter((i) => i.status !== "resolved") || [];
-	const resolvedIssues =
-		myIssues?.filter((i) => i.status === "resolved") || [];
-	const bookmarks = bookmarkedIssues?.results || bookmarkedIssues || [];
-	const upvoted = upvotedIssues || [];
-
-	// Build stats from user data
-	const userStats = [
-		{
-			label: "Issues Reported",
-			value: user.stats?.issues_reported || myIssues?.length || 0,
-			icon: "flag",
-		},
-		{
-			label: "Resolved",
-			value: user.stats?.issues_resolved || resolvedIssues.length,
-			icon: "check_circle",
-			accent: true,
-		},
-		{
-			label: "Upvotes Received",
-			value: user.stats?.upvotes_received || 0,
-			icon: "thumb_up",
-		},
-		{
-			label: "Comments",
-			value: user.stats?.comments_made || 0,
-			icon: "chat",
-		},
-	];
-
-	const tabs = [
-		{ id: "reported", label: "Reported", count: reportedIssues.length },
-		{ id: "resolved", label: "Resolved", count: resolvedIssues.length },
-		{ id: "bookmarked", label: "Bookmarked", count: bookmarks.length },
-		{ id: "upvoted", label: "Upvoted", count: upvoted.length },
-	];
 
 	return (
 		<div className='min-h-screen bg-background-light dark:bg-background-dark'>
@@ -296,3 +234,12 @@ export default function ProfilePage() {
 		</div>
 	);
 }
+
+function ProfilePage() {
+	return (
+		<AuthGuard>
+			<ProfilePageUi />
+		</AuthGuard>
+	);
+}
+export default ProfilePage;
