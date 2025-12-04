@@ -9,6 +9,7 @@ import { PageLoader } from "@/app/components/ui/loader";
 import EmptyState from "@/app/components/ui/empty_state";
 import FilterChip, { FilterChipGroup } from "@/app/components/ui/filter_chip";
 import Button from "@/app/components/ui/button";
+import Scaffold from "@/app/components/scaffold";
 
 const statusFilters = [
 	{ label: "All", value: "all" },
@@ -162,7 +163,7 @@ function MyIssueCard({ issue, onView, onEdit }) {
 	);
 }
 
-export default function MyIssuesPage() {
+function MyIssuesPageUi() {
 	const router = useRouter();
 	const {
 		myIssues,
@@ -339,5 +340,13 @@ export default function MyIssuesPage() {
 				)}
 			</main>
 		</div>
+	);
+}
+
+export default function MyIssuesPage() {
+	return (
+		<Scaffold>
+			<MyIssuesPageUi />
+		</Scaffold>
 	);
 }

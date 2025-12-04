@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Scaffold from "../components/scaffold";
 
 const socialLinks = [
 	{
@@ -60,7 +61,7 @@ const socialLinks = [
 	},
 ];
 
-export default function ContactPage() {
+function ContactPageUi() {
 	const router = useRouter();
 
 	return (
@@ -152,69 +153,69 @@ export default function ContactPage() {
 					</a>
 				</div>
 
-				<div class='layout-content-container flex flex-col max-w-[960px] flex-1'>
-					<div class='flex flex-wrap justify-between gap-3 p-4'>
-						<div class='flex min-w-72 flex-col gap-3'>
-							<p class='text-[#8daece] text-sm font-normal leading-normal'>
+				<div className='layout-content-container flex flex-col max-w-[960px] flex-1'>
+					<div className='flex flex-wrap justify-between gap-3 p-4'>
+						<div className='flex min-w-72 flex-col gap-3'>
+							<p className='text-[#8daece] text-sm font-normal leading-normal'>
 								We're here to help! Please fill out the form
 								below to get in touch with our support team.
 							</p>
 						</div>
 					</div>
-					<div class='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
-						<label class='flex flex-col min-w-40 flex-1'>
-							<p class='text-white text-base font-medium leading-normal pb-2'>
+					<div className='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
+						<label className='flex flex-col min-w-40 flex-1'>
+							<p className='text-white text-base font-medium leading-normal pb-2'>
 								Your Name
 							</p>
 							<input
 								placeholder='Enter your name'
-								class='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none h-14 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
+								className='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none h-14 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
 								value=''
 							/>
 						</label>
 					</div>
-					<div class='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
-						<label class='flex flex-col min-w-40 flex-1'>
-							<p class='text-white text-base font-medium leading-normal pb-2'>
+					<div className='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
+						<label className='flex flex-col min-w-40 flex-1'>
+							<p className='text-white text-base font-medium leading-normal pb-2'>
 								Your Email
 							</p>
 							<input
 								placeholder='Enter your email'
-								class='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none h-14 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
+								className='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none h-14 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
 								value=''
 							/>
 						</label>
 					</div>
-					<div class='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
-						<label class='flex flex-col min-w-40 flex-1'>
-							<p class='text-white text-base font-medium leading-normal pb-2'>
+					<div className='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
+						<label className='flex flex-col min-w-40 flex-1'>
+							<p className='text-white text-base font-medium leading-normal pb-2'>
 								Subject
 							</p>
 							<input
 								placeholder='Enter the subject'
-								class='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none h-14 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
+								className='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none h-14 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
 								value=''
 							/>
 						</label>
 					</div>
-					<div class='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
-						<label class='flex flex-col min-w-40 flex-1'>
-							<p class='text-white text-base font-medium leading-normal pb-2'>
+					<div className='flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3'>
+						<label className='flex flex-col min-w-40 flex-1'>
+							<p className='text-white text-base font-medium leading-normal pb-2'>
 								Message
 							</p>
 							<textarea
 								placeholder='Enter your message'
-								class='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none min-h-36 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
+								className='form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#20364b] focus:border-none min-h-36 placeholder:text-[#8daece] p-4 text-base font-normal leading-normal'
 							></textarea>
 						</label>
 					</div>
-					<div class='flex justify-stretch'>
-						<div class='flex flex-1 gap-3 flex-wrap px-4 py-3 justify-start'>
-							<button class='flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#359dff] text-[#0f1a24] text-sm font-bold leading-normal tracking-[0.015em]'>
-								<span class='truncate'>Submit</span>
+					<div className='flex justify-stretch'>
+						<div className='flex flex-1 gap-3 flex-wrap px-4 py-3 justify-start'>
+							<button className='flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#359dff] text-[#0f1a24] text-sm font-bold leading-normal tracking-[0.015em]'>
+								<span className='truncate'>Submit</span>
 							</button>
-							<button class='flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#20364b] text-white text-sm font-bold leading-normal tracking-[0.015em]'>
-								<span class='truncate'>Reset</span>
+							<button className='flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#20364b] text-white text-sm font-bold leading-normal tracking-[0.015em]'>
+								<span className='truncate'>Reset</span>
 							</button>
 						</div>
 					</div>
@@ -244,5 +245,13 @@ export default function ContactPage() {
 				</div>
 			</main>
 		</div>
+	);
+}
+
+export default function ContactPage() {
+	return (
+		<Scaffold>
+			<ContactPageUi />
+		</Scaffold>
 	);
 }

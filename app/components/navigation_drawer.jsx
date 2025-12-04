@@ -1,5 +1,15 @@
 "use client";
 
+const navLinks = [
+	{ label: "Dashboard", icon: "dashboard" },
+	{ label: "My Complaints", icon: "history" },
+	{ label: "New Complaint", icon: "add_circle" },
+	{ label: "Settings", icon: "settings" },
+	{ label: "Admin Panel", icon: "admin_panel_settings" },
+	{ label: "Help & Support", icon: "help" },
+	{ label: "About Us", icon: "info" },
+];
+
 export default function NavigationDrawer({ isOpen, onClose }) {
 	if (!isOpen) return null;
 
@@ -32,7 +42,7 @@ export default function NavigationDrawer({ isOpen, onClose }) {
 					{/* Navigation List */}
 					<div className='flex-grow overflow-y-scroll'>
 						<ul className='flex flex-col gap-2'>
-							<li className='flex h-12 items-center gap-4 rounded-lg px-4 bg-primary/20 dark:bg-primary/30'>
+							<li className='flex h-12 items-center gap-4 rounded-lg px-4 active-link'>
 								<span className='material-symbols-outlined text-primary'>
 									dashboard
 								</span>

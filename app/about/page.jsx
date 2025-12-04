@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "../components/ui";
+import Scaffold from "../components/scaffold";
 
 const impactFeatures = [
 	{
@@ -70,7 +71,7 @@ const testimonials = [
 	},
 ];
 
-export default function AboutPage() {
+function AboutPageUi() {
 	const router = useRouter();
 
 	const handleBack = () => {
@@ -176,70 +177,70 @@ export default function AboutPage() {
 				))}
 			</div>
 
-			<div class='layout-content-container flex flex-col max-w-[960px] flex-1'>
-				<h2 class='text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5'>
+			<div className='layout-content-container flex flex-col max-w-[960px] flex-1'>
+				<h2 className='text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5'>
 					Overview
 				</h2>
-				<p class='text-white text-base font-normal leading-normal pb-3 pt-1 px-4'>
+				<p className='text-white text-base font-normal leading-normal pb-3 pt-1 px-4'>
 					TownSpark is a community-driven platform designed to connect
 					residents with local authorities to address and resolve
 					community issues efficiently. Our goal is to foster a more
 					engaged and responsive local government, ensuring that every
 					voice is heard and every issue is addressed promptly.
 				</p>
-				<h2 class='text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5'>
+				<h2 className='text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5'>
 					How it works
 				</h2>
-				<div class='grid grid-cols-[40px_1fr] gap-x-2 px-4'>
-					<div class='flex flex-col items-center gap-1 pt-5'>
-						<div class='size-2 rounded-full bg-white'></div>
-						<div class='w-[1.5px] bg-[#4d4d4d] h-4 grow'></div>
+				<div className='grid grid-cols-[40px_1fr] gap-x-2 px-4'>
+					<div className='flex flex-col items-center gap-1 pt-5'>
+						<div className='size-2 rounded-full bg-white'></div>
+						<div className='w-[1.5px] bg-[#4d4d4d] h-4 grow'></div>
 					</div>
-					<div class='flex flex-1 flex-col py-3'>
-						<p class='text-white text-base font-medium leading-normal'>
+					<div className='flex flex-1 flex-col py-3'>
+						<p className='text-white text-base font-medium leading-normal'>
 							Report an Issue
 						</p>
-						<p class='text-[#adadad] text-base font-normal leading-normal'>
+						<p className='text-[#adadad] text-base font-normal leading-normal'>
 							Residents can easily report issues such as potholes,
 							broken streetlights, or public safety concerns
 							through our user-friendly interface.
 						</p>
 					</div>
-					<div class='flex flex-col items-center gap-1'>
-						<div class='w-[1.5px] bg-[#4d4d4d] h-4'></div>
-						<div class='size-2 rounded-full bg-white'></div>
-						<div class='w-[1.5px] bg-[#4d4d4d] h-4 grow'></div>
+					<div className='flex flex-col items-center gap-1'>
+						<div className='w-[1.5px] bg-[#4d4d4d] h-4'></div>
+						<div className='size-2 rounded-full bg-white'></div>
+						<div className='w-[1.5px] bg-[#4d4d4d] h-4 grow'></div>
 					</div>
-					<div class='flex flex-1 flex-col py-3'>
-						<p class='text-white text-base font-medium leading-normal'>
+					<div className='flex flex-1 flex-col py-3'>
+						<p className='text-white text-base font-medium leading-normal'>
 							Authorities Respond
 						</p>
-						<p class='text-[#adadad] text-base font-normal leading-normal'>
+						<p className='text-[#adadad] text-base font-normal leading-normal'>
 							Local authorities receive notifications about
 							reported issues and can respond directly within the
 							platform, providing updates and estimated resolution
 							times.
 						</p>
 					</div>
-					<div class='flex flex-col items-center gap-1 pb-3'>
-						<div class='w-[1.5px] bg-[#4d4d4d] h-4'></div>
-						<div class='size-2 rounded-full bg-white'></div>
+					<div className='flex flex-col items-center gap-1 pb-3'>
+						<div className='w-[1.5px] bg-[#4d4d4d] h-4'></div>
+						<div className='size-2 rounded-full bg-white'></div>
 					</div>
-					<div class='flex flex-1 flex-col py-3'>
-						<p class='text-white text-base font-medium leading-normal'>
+					<div className='flex flex-1 flex-col py-3'>
+						<p className='text-white text-base font-medium leading-normal'>
 							Issue Resolved
 						</p>
-						<p class='text-[#adadad] text-base font-normal leading-normal'>
+						<p className='text-[#adadad] text-base font-normal leading-normal'>
 							Once an issue is resolved, the reporting resident
 							and the community are notified, ensuring
 							transparency and accountability.
 						</p>
 					</div>
 				</div>
-				<h2 class='text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5'>
+				<h2 className='text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5'>
 					Our mission
 				</h2>
-				<p class='text-white text-base font-normal leading-normal pb-3 pt-1 px-4'>
+				<p className='text-white text-base font-normal leading-normal pb-3 pt-1 px-4'>
 					Our mission is to empower communities by providing a direct
 					and transparent channel for communication between residents
 					and local authorities. We believe that by facilitating this
@@ -329,5 +330,13 @@ export default function AboutPage() {
 				</Link>
 			</div>
 		</div>
+	);
+}
+
+export default function AboutPage() {
+	return (
+		<Scaffold>
+			<AboutPageUi />
+		</Scaffold>
 	);
 }

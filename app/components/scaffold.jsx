@@ -2,8 +2,15 @@
 
 import Sidebar from "./sidebar";
 import Topbar from "./topbar";
+import { useAuthStore } from "../z_internals/controllers/auth";
 
 export default function Scaffold({ children }) {
+	const { user, isLoggedIn } = useAuthStore();
+
+	if (!isLoggedIn) {
+		return <>{children}</>;
+	}
+
 	return (
 		<>
 			<div className='relative flex h-auto min-h-screen w-full flex-col group/design-root'>

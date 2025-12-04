@@ -70,27 +70,27 @@ function LandingPageUi() {
 	useEffect(() => {
 		const fetchStats = async () => {
 			try {
-				const response = await CoreService.getPlatformStats();
-				if (response.success && response.data) {
-					setStats({
-						issuesReported:
-							response.data.total_issues ||
-							response.data.issuesReported ||
-							"10K+",
-						issuesResolved:
-							response.data.resolved_issues ||
-							response.data.issuesResolved ||
-							"8.5K+",
-						activeMembers:
-							response.data.total_users ||
-							response.data.activeMembers ||
-							"5K+",
-						avgResolutionTime:
-							response.data.avg_resolution_time ||
-							response.data.avgResolutionTime ||
-							"48h",
-					});
-				}
+				// const response = await CoreService.getPlatformStats();
+				// if (response.success && response.data) {
+				// 	setStats({
+				// 		issuesReported:
+				// 			response.data.total_issues ||
+				// 			response.data.issuesReported ||
+				// 			"10K+",
+				// 		issuesResolved:
+				// 			response.data.resolved_issues ||
+				// 			response.data.issuesResolved ||
+				// 			"8.5K+",
+				// 		activeMembers:
+				// 			response.data.total_users ||
+				// 			response.data.activeMembers ||
+				// 			"5K+",
+				// 		avgResolutionTime:
+				// 			response.data.avg_resolution_time ||
+				// 			response.data.avgResolutionTime ||
+				// 			"48h",
+				// 	});
+				// }
 			} catch (error) {
 				console.error("Failed to fetch platform stats:", error);
 				// Keep default stats on error

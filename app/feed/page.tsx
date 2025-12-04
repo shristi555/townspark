@@ -75,7 +75,7 @@ function StatsCard({
 	};
 
 	return (
-		<div className='flex flex-col gap-2 p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50'>
+		<div className='flex flex-col gap-2 p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 scale-100 hover:scale-110 transition-all'>
 			<div className='flex items-center gap-2 text-slate-500 dark:text-slate-400'>
 				<span className='material-symbols-outlined text-xl'>
 					{icon}
@@ -122,7 +122,7 @@ function ActivityItem({
 	};
 
 	return (
-		<div className='grid grid-cols-[32px_1fr] gap-x-4'>
+		<div className='grid grid-cols-[32px_1fr] gap-x-4 scale-100 hover:scale-102 transition-all'>
 			<div className='flex flex-col items-center gap-1.5 pt-1'>
 				<div
 					className={`flex items-center justify-center size-8 rounded-full ${iconColors[iconColor]}`}
@@ -164,7 +164,7 @@ function NavLinkCard({
 	return (
 		<Link
 			href={href}
-			className='group flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-md'
+			className='group flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-md scale-100 hover:scale-110 transition-all'
 		>
 			<div className='flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors'>
 				<span className='material-symbols-outlined'>{icon}</span>
@@ -410,7 +410,7 @@ function FeedPageContent() {
 						View All Categories
 					</Link>
 				</div>
-				<div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3'>
+				<div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 '>
 					{[
 						{ icon: "construction", label: "Roads", count: 45 },
 						{ icon: "lightbulb", label: "Lighting", count: 23 },
@@ -422,7 +422,7 @@ function FeedPageContent() {
 						<Link
 							key={category.label}
 							href={`/explore?category=${category.label.toLowerCase()}`}
-							className='group flex flex-col items-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-md'
+							className='group flex flex-col items-center gap-2 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-md scale-100 hover:scale-110 transition-all'
 						>
 							<div className='flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors'>
 								<span className='material-symbols-outlined'>

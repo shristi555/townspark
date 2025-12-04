@@ -43,6 +43,24 @@ const navItems = [
 	},
 ];
 
+const footerLinks = [
+	{
+		name: "About",
+		href: "/about",
+		icon: "info",
+	},
+	{
+		name: "Help & Support",
+		href: "/contact",
+		icon: "help",
+	},
+];
+
+function handleLogout() {
+	// Implement logout functionality here
+	console.log("User logged out");
+}
+
 export default function Sidebar() {
 	const pathname = usePathname();
 	const userInfo = useAuthStore((state) => state.userInfo);
@@ -121,30 +139,28 @@ export default function Sidebar() {
 
 			{/* Bottom Links */}
 			<div className='flex flex-col gap-1 border-t border-neutral-divider dark:border-slate-800 pt-4'>
-				<Link
-					href='/about'
-					className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-						pathname === "/about"
-							? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-sky-300"
-							: "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-					}`}
-				>
-					<span className='material-symbols-outlined'>info</span>
-					<p className='text-sm font-medium leading-normal'>About</p>
-				</Link>
-				<Link
-					href='/contact'
-					className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-						pathname === "/contact"
-							? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-sky-300"
-							: "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
-					}`}
-				>
-					<span className='material-symbols-outlined'>help</span>
-					<p className='text-sm font-medium leading-normal'>
-						Help & Support
-					</p>
-				</Link>
+				{footerLinks.map((item) => {
+					const active = isActive(item.href);
+
+					return (
+						<Link
+							href={item.href}
+							key={item.name}
+							className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+								active
+									? "bg-primary/10 dark:bg-primary/20 text-primary dark:text-sky-300"
+									: "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+							}`}
+						>
+							<span className='material-symbols-outlined'>
+								{item.icon}
+							</span>
+							<p className='text-sm font-medium leading-normal'>
+								{item.name}
+							</p>
+						</Link>
+					);
+				})}
 			</div>
 		</aside>
 	);

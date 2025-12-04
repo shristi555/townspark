@@ -235,8 +235,7 @@ function ProgressUpdates({ progress }) {
 		</div>
 	);
 }
-
-export default function IssueDetailPage() {
+function IssueDetailPageUi() {
 	const router = useRouter();
 	const params = useParams();
 	const issueId = params?.id;
@@ -524,6 +523,14 @@ export default function IssueDetailPage() {
 					</Button>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+export default function IssueDetailPage() {
+	return (
+		<div>
+			<IssueDetailPageUi />
 		</div>
 	);
 }

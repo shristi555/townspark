@@ -10,6 +10,7 @@ import EmptyState from "@/app/components/ui/empty_state";
 import FilterChip, { FilterChipGroup } from "@/app/components/ui/filter_chip";
 import Button from "@/app/components/ui/button";
 import { Issue } from "@/app/z_internals/models/issue_model";
+import Scaffold from "@/app/components/scaffold";
 
 type StatusFilter = "all" | "open" | "in_progress" | "resolved" | "closed";
 
@@ -153,7 +154,7 @@ function IssueCard({ issue, onClick }: { issue: Issue; onClick: () => void }) {
 	);
 }
 
-export default function IssueListPage() {
+function IssueListPageUi() {
 	const router = useRouter();
 	const { issues, isLoading, errorMessage, fetchIssues } = useIssueStore();
 	const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
@@ -278,5 +279,13 @@ export default function IssueListPage() {
 				)}
 			</main>
 		</div>
+	);
+}
+
+export default function IssueListPage() {
+	return (
+		<Scaffold>
+			<IssueListPageUi />
+		</Scaffold>
 	);
 }

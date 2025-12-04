@@ -11,6 +11,7 @@ import Button from "@/app/components/ui/button";
 import ImageUploader from "@/app/components/ui/image_uploader";
 import { PageLoader } from "@/app/components/ui/loader";
 import EmptyState from "@/app/components/ui/empty_state";
+import Scaffold from "@/app/components/scaffold";
 
 function EditIssueForm() {
 	const router = useRouter();
@@ -368,8 +369,7 @@ function EditIssueForm() {
 		</form>
 	);
 }
-
-export default function EditIssuePage() {
+function EditIssuePageUi() {
 	const router = useRouter();
 
 	return (
@@ -397,5 +397,13 @@ export default function EditIssuePage() {
 				</Suspense>
 			</main>
 		</div>
+	);
+}
+
+export default function EditIssuePage() {
+	return (
+		<Scaffold>
+			<EditIssuePageUi />
+		</Scaffold>
 	);
 }

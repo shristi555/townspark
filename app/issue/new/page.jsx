@@ -11,6 +11,7 @@ import Button from "@/app/components/ui/button";
 import ImageUploader from "@/app/components/ui/image_uploader";
 import { PageLoader } from "@/app/components/ui/loader";
 import { AuthGuard } from "@/app/z_internals/controllers/auth";
+import Scaffold from "@/app/components/scaffold";
 
 function NewIssuePageUi() {
 	const router = useRouter();
@@ -279,8 +280,10 @@ function NewIssuePageUi() {
 
 export default function NewIssuePage() {
 	return (
-		<AuthGuard>
-			<NewIssuePageUi />
-		</AuthGuard>
+		<Scaffold>
+			<AuthGuard>
+				<NewIssuePageUi />
+			</AuthGuard>
+		</Scaffold>
 	);
 }

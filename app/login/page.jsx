@@ -204,7 +204,7 @@ function LoginForm() {
 								onChange={handleChange}
 								placeholder='Enter your email'
 								error={getFieldError("email")}
-								darkmode={darkMode}
+								// darkmode={darkMode}
 							/>
 						</div>
 
